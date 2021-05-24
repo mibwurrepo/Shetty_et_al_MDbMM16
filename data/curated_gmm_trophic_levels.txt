@@ -1,0 +1,145 @@
+module_id	module_name	category_1	category_2	category_3	note	trophic_included	trophic_level	trophic_class	trophic_guild
+MF0001	arabinoxylan degradation	carbohydrate degradation	polysaccharide_degradation	polysaccharide degradation	degradation	yes	1	primary_consumer	trophic_guild_1
+MF0002	fructan degradation (Curated)	carbohydrate degradation	polysaccharide_degradation	polysaccharide degradation	degradation	yes	1	primary_consumer	trophic_guild_1
+MF0003	pectin degradation I	carbohydrate degradation	polysaccharide_degradation	polysaccharide degradation	degradation	yes	1	primary_consumer	trophic_guild_1
+MF0004	pectin degradation II	carbohydrate degradation	polysaccharide_degradation	polysaccharide degradation	degradation	yes	1	primary_consumer	trophic_guild_1
+MF0005	starch degradation	carbohydrate degradation	polysaccharide_degradation	polysaccharide degradation	degradation	yes	1	primary_consumer	trophic_guild_1
+MF0006	lactose degradation	carbohydrate degradation	simple_carb_degradation	disaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0007	lactose and galactose degradation	carbohydrate degradation	simple_carb_degradation	disaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0008	maltose degradation	carbohydrate degradation	simple_carb_degradation	disaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0009	melibiose degradation	carbohydrate degradation	simple_carb_degradation	disaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0010	sucrose degradation I	carbohydrate degradation	simple_carb_degradation	disaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0011	sucrose degradation II	carbohydrate degradation	simple_carb_degradation	disaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0012	trehalose degradation	carbohydrate degradation	simple_carb_degradation	disaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0013	allose degradation	carbohydrate degradation	simple_carb_degradation	monosaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0014	arabinose degradation	carbohydrate degradation	simple_carb_degradation	monosaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0015	fructose degradation	carbohydrate degradation	simple_carb_degradation	monosaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0016	fucose degradation	carbohydrate degradation	simple_carb_degradation	monosaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0017	galactose degradation	carbohydrate degradation	simple_carb_degradation	monosaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0018	mannose degradation	carbohydrate degradation	simple_carb_degradation	monosaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0019	rhamnose degradation	carbohydrate degradation	simple_carb_degradation	monosaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0020	ribose degradation	carbohydrate degradation	simple_carb_degradation	monosaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0021	xylose degradation	carbohydrate degradation	simple_carb_degradation	monosaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0022	galacturonate degradation I	carbohydrate degradation	simple_carb_degradation	sugar acid degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0023	galacturonate degradation II	carbohydrate degradation	simple_carb_degradation	sugar acid degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0024	phenylalanine degradation	amino acid degradation	aa_degradation	aromatic amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0025	tryptophan degradation	amino acid degradation	aa_degradation	aromatic amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0026	tyrosine degradation I	amino acid degradation	aa_degradation	aromatic amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0027	tyrosine degradation II	amino acid degradation	aa_degradation	aromatic amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0028	aspartate degradation I	amino acid degradation	aa_degradation	negatively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0029	aspartate degradation II	amino acid degradation	aa_degradation	negatively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0030	glutamate degradation I	amino acid degradation	aa_degradation	negatively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0031	glutamate degradation II	amino acid degradation	aa_degradation	negatively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0032	glutamate degradation III	amino acid degradation	aa_degradation	negatively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0033	alanine degradation I	amino acid degradation	aa_degradation	"nonpolar, aliphatic amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0034	alanine degradation II	amino acid degradation	aa_degradation	"nonpolar, aliphatic amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0035	glycine degradation	amino acid degradation	aa_degradation	"nonpolar, aliphatic amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0036	isoleucine degradation	amino acid degradation	aa_degradation	"nonpolar, aliphatic amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0037	leucine degradation	amino acid degradation	aa_degradation	"nonpolar, aliphatic amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0038	methionine degradation I	amino acid degradation	aa_degradation	"nonpolar, aliphatic amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0039	methionine degradation II	amino acid degradation	aa_degradation	"nonpolar, aliphatic amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0040	proline degradation	amino acid degradation	aa_degradation	"nonpolar, aliphatic amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0041	valine degradation I	amino acid degradation	aa_degradation	"nonpolar, aliphatic amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0042	asparagine degradation	amino acid degradation	aa_degradation	"polar, uncharged amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0043	cysteine biosynthesis/homocysteine degradation	amino acid degradation	aa_degradation	"polar, uncharged amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0044	cysteine degradation I	amino acid degradation	aa_degradation	"polar, uncharged amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0045	cysteine degradation II	amino acid degradation	aa_degradation	"polar, uncharged amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0046	glutamine degradation I	amino acid degradation	aa_degradation	"polar, uncharged amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0047	glutamine degradation II	amino acid degradation	aa_degradation	"polar, uncharged amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0048	serine degradation	amino acid degradation	aa_degradation	"polar, uncharged amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0049	threonine degradation I	amino acid degradation	aa_degradation	"polar, uncharged amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0050	threonine degradation II	amino acid degradation	aa_degradation	"polar, uncharged amino acid degradation"	aa_degradation	no	not_assigned	na	na
+MF0051	arginine degradation I	amino acid degradation	aa_degradation	positively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0052	arginine degradation II	amino acid degradation	aa_degradation	positively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0053	arginine degradation III	amino acid degradation	aa_degradation	positively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0054	arginine degradation IV	amino acid degradation	aa_degradation	positively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0055	arginine degradation V	amino acid degradation	aa_degradation	positively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0056	histidine degradation	amino acid degradation	aa_degradation	positively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0057	lysine degradation I	amino acid degradation	aa_degradation	positively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0058	lysine degradation II	amino acid degradation	aa_degradation	positively charged amino acid degradation	aa_degradation	no	not_assigned	na	na
+MF0059	anaerobic fatty acid beta-oxidation	lipid degradation	fatty_acid_degradation	glycerol degradation	fatty_acid_degradation	yes	3	tertiary_consumer	trophic_guild_3
+MF0060	glycerol degradation I	lipid degradation	degradation	glycerol degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0061	glycerol degradation II	lipid degradation	degradation	glycerol degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0062	glycerol degradation III	lipid degradation	degradation	glycerol degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0063	glyoxylate bypass	lipid degradation	degradation	glyoxylate bypass	internal_metabolic_pwy	no	not_assigned	na	na
+MF0064	triacylglycerol degradation	lipid degradation	degradation	triacylglycerol degradation	degradation	yes	1	primary_consumer	trophic_guild_1
+MF0065	Bifidobacterium shunt	central metabolism	c_metabolism	energy metabolism	internal_metabolic_pwy	no	not_assigned	na	na
+MF0066	Entner-Doudoroff pathway	central metabolism	c_metabolism	energy metabolism	internal_metabolic_pwy	no	not_assigned	na	na
+MF0067	glycolysis (preparatory phase)	central metabolism	c_metabolism	energy metabolism	internal_metabolic_pwy	no	not_assigned	na	na
+MF0068	glycolysis (pay-off phase)	central metabolism	c_metabolism	energy metabolism	internal_metabolic_pwy	no	not_assigned	na	na
+MF0069	NADH:ferredoxin oxidoreductase	gas metabolism	Other	hydrogen metabolism	internal_metabolic_pwy	no	not_assigned	na	na
+MF0070	pentose phosphate pathway (oxidative phase)	central metabolism	c_metabolism	energy metabolism	internal_metabolic_pwy	no	not_assigned	na	na
+MF0071	pentose phosphate pathway (non-oxidative branch)	central metabolism	c_metabolism	energy metabolism	internal_metabolic_pwy	no	not_assigned	na	na
+MF0072	pyruvate dehydrogenase complex	central metabolism	fermentation	energy metabolism	internal_metabolic_pwy	no	not_assigned	na	na
+MF0073	pyruvate:ferredoxin oxidoreductase	central metabolism	fermentation	energy metabolism	internal_metabolic_pwy	no	not_assigned	na	na
+MF0074	pyruvate:formate lyase	central metabolism	fermentation	energy metabolism	format_producing	no	not_assigned	na	na
+MF0075	acetate to acetyl-CoA	organic acid metabolism	fermentation	acetate metabolism	acetate_consuming	yes	3	tertiary_consumer	trophic_guild_3
+MF0076	4-aminobutyrate degradation	amino acid degradation	fermentation	positively charged amino acid degradation	?	no	not_assigned	na	na
+MF0077	formate conversion	organic acid metabolism	fermentation	formate metabolism	formate_consuming	yes	3	tertiary_consumer	trophic_guild_3
+MF0078	lactaldehyde degradation	carbohydrate degradation	degradation	lactaldehyde degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0079	lactate consumption I	organic acid metabolism	fermentation	lactate metabolism	lactate_consuming	yes	3	tertiary_consumer	trophic_guild_3
+MF0080	lactate consumption II	organic acid metabolism	fermentation	lactate metabolism	lactate_consuming	yes	3	tertiary_consumer	trophic_guild_3
+MF0081	methanol conversion	gas metabolism	fermentation	methanogenesis	consume_methanol	yes	2	secondary_consumer	trophic_guild_2
+MF0082	putrescine degradation	amines and polyamines degradation	aa_degradation	biogenic amine degradation	?	no	not_assigned	na	na
+MF0083	succinate consumption	organic acid metabolism	fermentation	succinate metabolism	succinate_consuming	yes	3	tertiary_consumer	trophic_guild_3
+MF0084	succinate conversion to propionate	organic acid metabolism	fermentation	propionate metabolism	?	yes	not_assigned	na	na
+MF0085	urea degradation	amines and polyamines degradation	Other	urea degradation	nitrogen_metabolism	yes	not_assigned	na	na
+MF0086	acetyl-CoA to acetate	organic acid metabolism	fermentation	acetate metabolism	producing	no	not_assigned	na	na
+MF0087	acetyl-CoA to crotonyl-CoA	organic acid metabolism	fermentation	butyrate metabolism	producing	no	not_assigned	na	na
+MF0088	butyrate production I	organic acid metabolism	fermentation	butyrate metabolism	producing	yes	not_assigned	na	na
+MF0089	butyrate production II	organic acid metabolism	fermentation	butyrate metabolism	producing	yes	not_assigned	na	na
+MF0090	ethanol production I	alcohol metabolism	fermentation	ethanol metabolism	producing	yes	not_assigned	na	na
+MF0091	ethanol production II	alcohol metabolism	fermentation	ethanol metabolism	producing	yes	not_assigned	na	na
+MF0092	lactate production	organic acid metabolism	fermentation	lactate metabolism	producing	yes	not_assigned	na	na
+MF0093	propionate production I	organic acid metabolism	fermentation	propionate metabolism	producing	yes	not_assigned	na	na
+MF0094	propionate production II	organic acid metabolism	fermentation	propionate metabolism	producing	yes	not_assigned	na	na
+MF0095	propionate production III	organic acid metabolism	fermentation	propionate metabolism	producing	yes	not_assigned	na	na
+MF0096	succinate production	organic acid metabolism	fermentation	succinate metabolism	producing	yes	not_assigned	na	na
+MF0097	homoacetogenesis	gas metabolism	fermentation	acetogenesis	autotrophic	yes	4	trophic_guild_4	trophic_guild_4
+MF0098	hydrogen metabolism	gas metabolism	fermentation	hydrogen metabolism	inter conversions	no	not_assigned	trophic_guild_4	trophic_guild_4
+MF0099	methanogenesis - methyl-coM	gas metabolism	methanogenesis	methanogenesis	methanogenesis	yes	4	trophic_guild_4	trophic_guild_4
+MF0100	methanogenesis from carbon dioxide	gas metabolism	methanogenesis	methanogenesis	methanogenesis	yes	4	trophic_guild_4	trophic_guild_4
+MF0101	nitrate reduction (dissimilatory)	inorganic nutrient metabolism	nitrogen_metabolism	nitrogen	nitrogen_metabolism	yes	4	trophic_guild_4	trophic_guild_4
+MF0102	sulfate reduction (dissimilatory)	gas metabolism	sulfur_metabolism	sulfate metabolism	sulfur_metabolism	yes	4	trophic_guild_4	trophic_guild_4
+MF0103	mucin degradation	glycoprotein degradation	polysaccharide_degradation	mucus degradation	degradation	yes	1	primary_consumer	trophic_guild_1
+MF0104	"lactate consumption III (lctABCDEF, Curated)"	organic acid metabolism	fermentation	lactate metabolism	lactate_consuming	yes	3	tertiary_consumer	trophic_guild_3
+MF0105	cellobiose degradation I (curated)	carbohydrate degradation	Other	disaccharide degradation	degradation	yes	2	secondary_consumer	trophic_guild_2
+MF0106	"1,2 propanediol production I (lactaldehyde, curated)"	diol metabolism	fermentation	"1,2 propanediol metabolism"	producing	no	not_assigned	na	na
+MF0107	"1,2 propanediol production II (Hydroxyacetone, curated)"	diol metabolism	fermentation	"1,2 propanediol metabolism"	producing	no	not_assigned	na	na
+MF0108	"propionate production IV (1,2-PD)"	organic acid metabolism	fermentation	propionate metabolism	"1,2 PD consuming"	no	3	tertiary_consumer	trophic_guild_3
+MF00020	"serine biosynthesis, glycerate-3P => serine"	amino acid biosynthesis	aa_biosynthesis	"polar, uncharged amino acid biosynthesis"	aa_biosynthesis	no	not_assigned	na	na
+MF00018	"threonine biosynthesis, aspartate => homoserine => threonine"	amino acid biosynthesis	aa_biosynthesis	"polar, uncharged amino acid biosynthesis"	aa_biosynthesis	no	not_assigned	na	na
+MF00033	"ectoine biosynthesis, aspartate => ectoine"	amino acid degradation	aa_biosynthesis	negatively charged amino acidá	aa_biosynthesis	no	not_assigned	na	na
+MF00021	"cysteine biosynthesis, serine => cysteine"	amino acid biosynthesis	aa_biosynthesis	"polar, uncharged amino acid biosynthesis"	aa_biosynthesis	no	not_assigned	na	na
+MF00338	"cysteine biosynthesis, homocysteine + serine => cysteine"	amino acid biosynthesis	aa_biosynthesis	"polar, uncharged amino acid biosynthesis"	aa_biosynthesis	no	not_assigned	na	na
+MF00609	"cysteine biosynthesis, methionine => cysteine"	amino acid biosynthesis	aa_biosynthesis	"polar, uncharged amino acid biosynthesis"	aa_biosynthesis	no	not_assigned	na	na
+MF00017	"methionine biosynthesis, apartate => homoserine => methionine"	amino acid biosynthesis	aa_biosynthesis	"nonpolar, aliphatic amino acid biosynthesis"	aa_biosynthesis	no	not_assigned	na	na
+MF00019	"valine/isoleucine biosynthesis, pyruvate => valine / 2-oxobutanoate => isoleucine"	amino acid biosynthesis	aa_biosynthesis	"nonpolar, aliphatic amino acid biosynthesis"	aa_biosynthesis	no	not_assigned	na	na
+MF00535	"isoleucine biosynthesis, pyruvate => 2-oxobutanoate"	amino acid biosynthesis	aa_biosynthesis	"nonpolar, aliphatic amino acid biosynthesis"	aa_biosynthesis	no	not_assigned	na	na
+MF00570	"isoleucine biosynthesis, threonine => 2-oxobutanoate => isoleucine"	amino acid biosynthesis	aa_biosynthesis	"nonpolar, aliphatic amino acid biosynthesis"	aa_biosynthesis	no	not_assigned	na	na
+MF00432	"leucine biosynthesis, 2-oxoisovalerate => 2-oxoisocaproate"	amino acid biosynthesis	aa_biosynthesis	"nonpolar, aliphatic amino acid biosynthesis"	aa_biosynthesis	no	not_assigned	na	na
+MF00016	"lysine biosynthesis, succinyl-DAP pathway, aspartate => lysine"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00525 	"lysine biosynthesis, acetyl-DAP pathway, aspartate => lysine"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00526	"lysine biosynthesis, DAP dehydrogenase pathway, aspartate => lysine"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00527	"lysine biosynthesis, DAP aminotransferase pathway, aspartate => lysine"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00030	"lysine biosynthesis, AAA pathway, 2-oxoglutarate => 2-aminoadipate => lysine"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00433	"lysine biosynthesis, 2-oxoglutarate => 2-oxoadipate"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00031	"lysine biosynthesis, mediated by LysW, 2-aminoadipate => lysine"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00028	"ornithine biosynthesis, glutamate => ornithine"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00763	"ornithine biosynthesis, mediated by LysW, glutamate => ornithine"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00844	"arginine biosynthesis, ornithine => arginine"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00845	"arginine biosynthesis, glutamate => acetylcitrulline => arginine"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00029	urea cycle	amines and polyamines degradation	aa_biosynthesis	urea degradation	aa_biosynthesis	no	not_assigned	na	na
+MF00015	"proline biosynthesis, glutamate => proline"	amino acid biosynthesis	aa_biosynthesis	"nonpolar, aliphatic amino acid biosynthesis"	aa_biosynthesis	no	not_assigned	na	na
+MF00026	"histidine biosynthesis, PRPP => histidine"	amino acid biosynthesis	aa_biosynthesis	positively charged amino acid degradation	aa_biosynthesis	no	not_assigned	na	na
+MF00022	"shikimate pathway, phosphoenolpyruvate + erythrose-4P => chorismate"	amino acid biosynthesis	aa_biosynthesis	aromatic amino acids biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00023	"tryptophan biosynthesis, chorismate => tryptophan"	amino acid biosynthesis	aa_biosynthesis	aromatic amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00024	"phenylalanine biosynthesis, chorismate => phenylalanine"	amino acid biosynthesis	aa_biosynthesis	aromatic amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00025	"tyrosine biosynthesis, chorismate => tyrosine"	amino acid biosynthesis	aa_biosynthesis	aromatic amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MF00040	"tyrosine biosynthesis, prephanate => pretyrosine => tyrosine"	amino acid biosynthesis	aa_biosynthesis	aromatic amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MGB006	glutamate biosynthesis I	amino acid biosynthesis	aa_biosynthesis	negatively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MGB007	glutamate biosynthesis II	amino acid biosynthesis	aa_biosynthesis	negatively charged amino acid biosynthesis	aa_biosynthesis	no	not_assigned	na	na
+MGB044	acetate synthesis II	organic acid metabolism	fermentation	acetate metabolism	producing	no	not_assigned	na	na
+MGB045	acetate synthesis III	organic acid metabolism	fermentation	acetate metabolism	producing	no	not_assigned	na	na
+MGB046	acetate synthesis IV	organic acid metabolism	fermentation	acetate metabolism	producing	no	not_assigned	na	na
+MF00075	acetate to acetyl-CoA II	organic acid metabolism	fermentation	acetate metabolism	producing	no	not_assigned		trophic_guild_3
