@@ -1,7 +1,7 @@
-Study title: Synthetic Microbiome Approach for Deciphering the Ecophysiology of Human Intestinal Microbes      
+Functional analysis of a synthetic gut microbiome reveals niche segregation as a driving force for assembly, stability, co-existence and activity       
 ----------------------------------------------------------------------------------------------------------------------
 
-Authors: Sudarshan A. Shetty<sup>1#⸸*</sup>, Ioannis Kostopoulos<sup>1#⁋</sup>, Sharon Geerlings<sup>1#</sup>, Clara Belzer<sup>*1</sup>, Hauke Smidt<sup>*1</sup>, Willem M. de Vos<sup>1,2*</sup>  
+Authors: Sudarshan A. Shetty<sup>1#⸸*</sup>, Ioannis Kostopoulos<sup>1#⁋</sup>, Sharon Geerlings<sup>1#</sup>, Hauke Smidt<sup>* 1</sup>, Willem M. de Vos<sup>1,2* </sup>, Clara Belzer<sup>*1</sup>  
 
 <sup>1</sup>Laboratory of Microbiology, Wageningen University & Research   
 <sup>2</sup>Human Microbiome Research Program, Faculty of Medicine, University of Helsinki, Helsinki, Finland   
@@ -11,14 +11,25 @@ Authors: Sudarshan A. Shetty<sup>1#⸸*</sup>, Ioannis Kostopoulos<sup>1#⁋</su
 <sup>*</sup>Co-Corresponding authors; These authors contributed equally.  
   
 
-Correspondence:  
+Manuscript Correspondence:  
 Sudarshan A. Shetty; sudarshanshetty9[@]gmail[.]com  
 Clara Belzer; clara.belzer[@]wur[dot]nl   
 Hauke Smidt; hauke.smidt[@]wur[dot]nl   
 Willem M. de Vos; willem.devos[@]wur[dot]nl    
 
-This repository contains codes for analysis done in the research article by Sudarshan A. Shetty<sup>1#⸸*</sup>, Ioannis Kostopoulos<sup>1#⁋</sup>, Sharon Geerlings<sup>1#</sup>, Clara Belzer<sup>*1</sup>, Hauke Smidt<sup>*1</sup>, Willem M. de Vos<sup>1,2</sup>* (2020).Synthetic Microbiome Approach for Deciphering the Ecophysiology of Human Intestinal Microbes. [in prep](XXX). 
+This repository contains codes for analysis done in the research article by Sudarshan A. Shetty<sup>1#⸸*</sup>, Ioannis Kostopoulos<sup>1#⁋</sup>, Sharon Geerlings<sup>1#</sup>, Clara Belzer<sup>*1</sup>, Hauke Smidt<sup>*1</sup>, Willem M. de Vos<sup>1,2</sup>* (2021).Functional analysis of a synthetic gut microbiome reveals niche segregation as a driving force for assembly, stability, co-existence and activity. [in prep](XXX).   
+
+**We developed `syncomR` package as a research compendium for organizing and sharing files processed files and custom functions**   
+For re-running the analysis, first install `syncomR` package from [GitHub](https://github.com/microsud/syncomR)  
+
+```r
+install.packages("devtools")
+
+devtools::install_github("microsud/syncomR")
+
+```
 
 
+Correspondence for analysis:  
 Author: Sudarshan A. Shetty
-Contact: sudarshanshetty9[at]gmail[dot]com
+Contact: sudarshanshetty9[at]gmail[dot]com  

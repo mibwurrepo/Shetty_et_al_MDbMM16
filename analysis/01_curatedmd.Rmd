@@ -1,0 +1,333 @@
+---
+title: "Functional analysis of a synthetic gut microbiome reveals niche segregation as a driving force for assembly, stability, co-existence and activity"
+subtitle: "Selection of species"
+author: "Sudarshan A. Shetty"
+date: "`r date()`"
+output: 
+  html_document: 
+    toc: yes
+    toc_depth: 2
+    toc_float: true
+    code_folding: show 
+    fig_caption: yes 
+---
+
+**Project attributes**   
+Project title : Mucus-Diet based minimal microbiome   
+contributor(s) : Sudarshan A. Shetty, Ioannis Kostopoulos, Sharon Geerlings  
+Investigator (s) : Sudarshan A. Shetty, Ioannis Kostopoulos, Sharon Geerlings, Clara Belzer, Hauke Smidt, Willem M. de Vos   
+
+In this document we investigate the human gut metagenomics data to identify core species.  
+
+## Setup
+Load libraries  
+
+```{r, warning=FALSE, message=FALSE}
+
+#library(BiocInstaller)
+#BiocManager::install("curatedMetagenomicData")
+library(RColorBrewer)
+#library(curatedMetagenomicData)
+library(microbiome)
+library(microbiomeutilities)
+library(ggpubr)
+library(dplyr)
+```
+
+```{r}
+
+dir.create("species_selection")
+dir.create("species_selection/tab")
+dir.create("species_selection/fig")
+dir.create("species_selection/rds")
+```
+
+## Download public metagenomic data  
+
+Download the datasets for gut metagenomes from the `curatedMD` R package.  24 Aug 2020
+Snapshot from 2020-04-27. Since then `curatedMD` R package has been updated. but older version data are stored. 
+```{r warning=FALSE, message=FALSE, eval=FALSE}
+
+#eh = ExperimentHub()
+#myquery = query(eh, "curatedMetagenomicData")
+# myquery
+# View(mcols(myquery))
+
+hmp.eset <- HMP_2012.metaphlan_bugs_list.stool()
+#lecha.eset <- LeChatelierE_2013.metaphlan_bugs_list.stool()
+loman.eset <- LomanNJ_2013.metaphlan_bugs_list.stool()
+nielsenHB.eset <- NielsenHB_2014.metaphlan_bugs_list.stool()
+obregon.eset <- `Obregon-TitoAJ_2015.metaphlan_bugs_list.stool`()
+#qinN.eset <- QinN_2014.metaphlan_bugs_list.stool()
+rampel.eset <- RampelliS_2015.metaphlan_bugs_list.stool()
+zeller.eset <- ZellerG_2014.metaphlan_bugs_list.stool()
+qinj.eset <- QinJ_2012.metaphlan_bugs_list.stool()
+hann.eset <- HanniganGD_2017.metaphlan_bugs_list.stool()
+beng.eset <- `Bengtsson-PalmeJ_2015.metaphlan_bugs_list.stool`()
+louis.eset <- LouisS_2016.metaphlan_bugs_list.stool()
+schir.eset <- SchirmerM_2016.metaphlan_bugs_list.stool()
+
+```
+
+
+## Convert to phyloseq object   
+
+```{r eval=FALSE}
+
+hmp.pseq1 = ExpressionSet2phyloseq( hmp.eset, relab=FALSE)
+#lecha.pseq1 = ExpressionSet2phyloseq( lecha.eset, relab=FALSE)
+loman.pseq1 = ExpressionSet2phyloseq( loman.eset, relab=FALSE)
+neil.pseq1 = ExpressionSet2phyloseq( nielsenHB.eset, relab=FALSE)
+obregon.pseq1 = ExpressionSet2phyloseq( obregon.eset, relab=FALSE)
+#qinN.pseq1 = ExpressionSet2phyloseq( qinN.eset, relab=FALSE)
+rampel.pseq1 = ExpressionSet2phyloseq( rampel.eset, relab=FALSE)
+zeller.pseq1 = ExpressionSet2phyloseq( zeller.eset, relab=FALSE)
+qinj.pseq1 = ExpressionSet2phyloseq( qinj.eset, relab=FALSE)
+hann.est.pseq1 = ExpressionSet2phyloseq(hann.eset, relab=FALSE)
+beng.eset.pseq1 = ExpressionSet2phyloseq(beng.eset, relab=FALSE)
+louis.eset.pseq1 = ExpressionSet2phyloseq(louis.eset, relab=FALSE)
+schir.eset.pseq1 = ExpressionSet2phyloseq(schir.eset, relab=FALSE)
+
+```
+
+
+## Select non-diseased samples    
+
+```{r eval=FALSE}
+
+
+#unique(meta(neil.pseq1)$disease)
+neil.pseq1 <- subset_samples(neil.pseq1, disease == "healthy")
+
+unique(meta(obregon.pseq1)$disease)
+obregon.pseq1 <- subset_samples(obregon.pseq1, disease == "healthy")
+
+#unique(meta(qinN.pseq1)$disease)
+#qinN.pseq1 <- subset_samples(qinN.pseq1, disease == "n")
+
+unique(meta(rampel.pseq1)$study_condition)
+rampel.pseq1 <- subset_samples(rampel.pseq1, study_condition == "control")
+
+hann.pseq1 <- subset_samples(hann.est.pseq1, disease == "healthy")
+
+unique(meta(zeller.pseq1)$disease)
+zeller.pseq1 <- subset_samples(zeller.pseq1, disease == "healthy")
+
+unique(meta(qinj.pseq1)$disease)
+qinj.pseq1 <- subset_samples(qinj.pseq1, is.na(disease))
+
+```
+
+
+```{r, eval=FALSE}
+
+hmp.pseq1 <- prune_taxa(taxa_sums(hmp.pseq1) > 0, hmp.pseq1)
+#lecha.pseq1 <- prune_taxa(taxa_sums(lecha.pseq1) > 0, lecha.pseq1)
+neil.pseq1 <- prune_taxa(taxa_sums(neil.pseq1) > 0, neil.pseq1)
+obregon.pseq1 <- prune_taxa(taxa_sums(obregon.pseq1) > 0, obregon.pseq1)
+#qinN.pseq1 <- prune_taxa(taxa_sums(qinN.pseq1) > 0, qinN.pseq1)
+rampel.pseq1 <- prune_taxa(taxa_sums(rampel.pseq1) > 0, rampel.pseq1)
+zeller.pseq1 <- prune_taxa(taxa_sums(zeller.pseq1) > 0, zeller.pseq1)
+qinj.pseq1 <- prune_taxa(taxa_sums(qinj.pseq1) > 0, qinj.pseq1)
+hannpseq1 = prune_taxa(taxa_sums(hann.pseq1) > 0, hann.pseq1)
+beng.pseq1 = prune_taxa(taxa_sums(beng.eset.pseq1) > 0, beng.eset.pseq1)
+louis.pseq1 = prune_taxa(taxa_sums(louis.eset.pseq1) > 0, louis.eset.pseq1)
+schir.pseq1 = prune_taxa(taxa_sums(schir.eset.pseq1) > 0, schir.eset.pseq1)
+
+```
+
+## Merge all data
+
+```{r, eval=FALSE}
+
+
+ps0a <- merge_phyloseq(hmp.pseq1,neil.pseq1,obregon.pseq1, 
+                       rampel.pseq1,zeller.pseq1,qinj.pseq1,
+                       hannpseq1,beng.pseq1,louis.pseq1,schir.pseq1)
+
+saveRDS(ps0a, "species_selection/rds/ps1_raw_metagenome.rds")
+```
+
+
+## Clean and filter   
+
+Read the data from August 2020  
+```{r eval=FALSE}
+
+ps0a <- readRDS("species_selection/rds/ps1_raw_metagenome.rds")
+
+
+```
+
+
+```{r eval=FALSE}
+
+ps0b <- subset_samples(ps0a, country != "CHN") %>% subset_samples(country != "PER") %>% subset_samples(country != "TZA")
+
+ps0c <- subset_taxa(ps0b, Kingdom == "Bacteria")
+
+any(taxa_sums(ps0c) < 1)
+
+ps0d <- prune_taxa(taxa_sums(ps0c) > 1, ps0c)
+
+any(taxa_sums(ps0d) < 1)
+
+ps0e <- subset_taxa(ps0d, !is.na(Species))
+
+ps1a <- tax_glom(ps0e, "Species") # time consuming step
+
+saveRDS(ps1a, "species_selection/rds/ps1a_taxglom_species.rds")
+
+```
+
+
+```{r}
+
+ps1a <- readRDS("species_selection/rds/ps1a_taxglom_species.rds")
+#any(taxa_sums(ps1a) == 1)
+
+ps1a.west <- microbiome::transform(ps1a, "compositional")
+
+#head(otu_table(ps1a.west))
+
+min(taxa_sums(ps1a.west))
+
+# final study detail
+ps1a.west
+#head(meta(ps1a.west))
+table(meta(ps1a.west)$country)
+nsamples(ps1a.west)
+
+```
+
+1155 healthy samples
+
+CAN DEU DNK ESP FRA ITA NLD SWE USA 
+  3  97 177  71  61  11 471  70 194 
+  
+## Core anlaysis  
+
+```{r}
+
+prevalences <- seq(.05, 1, .05)
+detections <- 10^seq(log10(1e-5), log10(.2), length = 10)
+ps1a.core <- plot_core(ps1a.west, plot.type = "heatmap", 
+                       prevalences = prevalences,
+                       detections = detections,
+                       colours = rev(brewer.pal(9, "RdBu")),
+                       min.prevalence = .10, 
+                       horizontal = F)
+
+ps1a.core
+head(ps1a.core$data)
+str(ps1a.core$data)
+core_df <- ps1a.core$data
+#core_df$DetectionThreshold <- as.numeric(core_df$DetectionThreshold)
+core_df <- subset(core_df, DetectionThreshold == "1e-05")
+```
+
+Core species  
+
+```{r}
+core_sp <- core_members(ps1a.west, detection = 0.00001, prevalence = 0.50)
+core_sp
+# s__Bacteroides_ovatus
+# s__Faecalibacterium_prausnitzii
+# s__Roseburia_intestinalis
+# s__Subdoligranulum_unclassified
+# s__Akkermansia_muciniphila
+# s__Eubacterium_rectale
+# s__Ruminococcus_obeum
+# s__Lachnospiraceae_bacterium_7_1_58FAA
+# s__Ruminococcus_bromii
+# s__Bacteroides_xylanisolvens
+# s__Eubacterium_hallii
+# s__Coprococcus_catus
+# s__Bifidobacterium_adolescentis
+# s__Collinsella_aerofaciens
+# s__Eubacterium_siraeum
+# non-core s__Blautia_hydrogenotrophica
+candidate <- c("s__Bacteroides_ovatus","s__Faecalibacterium_prausnitzii",
+               "s__Roseburia_intestinalis","s__Subdoligranulum_unclassified",
+               "s__Akkermansia_muciniphila","s__Eubacterium_rectale", 
+               "s__Ruminococcus_obeum", "s__Lachnospiraceae_bacterium_7_1_58FAA", 
+               "s__Ruminococcus_bromii","s__Bacteroides_xylanisolvens",
+               "s__Eubacterium_hallii","s__Coprococcus_catus",
+               "s__Bifidobacterium_adolescentis","s__Collinsella_aerofaciens",
+               "s__Eubacterium_siraeum","s__Blautia_hydrogenotrophica")
+```
+
+
+```{r}
+DT::datatable(tax_table(ps1a.west))
+```
+
+```{r}
+core_df <- subset(core_df, core_df$Taxa %in% candidate)
+nrow(core_df)
+```
+
+### Plot densities  
+
+```{r}
+library(ggridges)
+
+ps.cor <- prune_taxa(taxa_names(ps1a.west) %in% core_sp, ps1a.west)
+
+ps_df <- phy_to_ldf(ps1a.west, transform.counts = NULL)
+colnames(ps_df)
+ps_df_sub <- subset(ps_df, OTUID %in% candidate)
+
+colnames(core_df) <- c("OTUID","DetectionThreshold", "Prevalence")
+ps_df_sub <- ps_df_sub %>% 
+  left_join(core_df, by="OTUID")
+
+#str(ps_df_sub$Prevalence)
+ps_df_sub$AbundanceLog <- log10(ps_df_sub$Abundance + 1)
+
+```
+
+Rename taxa 
+```{r}
+candidate <- c("s__Bacteroides_ovatus","s__Faecalibacterium_prausnitzii",
+               "s__Roseburia_intestinalis","s__Subdoligranulum_unclassified",
+               "s__Akkermansia_muciniphila","s__Eubacterium_rectale", 
+               "s__Ruminococcus_obeum", "s__Lachnospiraceae_bacterium_7_1_58FAA", 
+               "s__Ruminococcus_bromii","s__Bacteroides_xylanisolvens",
+               "s__Eubacterium_hallii","s__Coprococcus_catus",
+               "s__Bifidobacterium_adolescentis","s__Collinsella_aerofaciens",
+               "s__Eubacterium_siraeum","s__Blautia_hydrogenotrophica")
+
+ps_df_sub$OTUID <- gsub("s__Eubacterium_rectale", "Agathobacter_rectalis",ps_df_sub$OTUID)
+ps_df_sub$OTUID <- gsub("s__Lachnospiraceae_bacterium_7_1_58FAA", "s__Lachnospiraceae_bacterium_7_1_58FAA:Flavonifractor",ps_df_sub$OTUID)
+ps_df_sub$OTUID <- gsub("s__Eubacterium_hallii", "Anaerobutyricum_hallii",ps_df_sub$OTUID)
+
+ps_df_sub$OTUID <- gsub("s__Ruminococcus_obeum", "Blautia_obeum",ps_df_sub$OTUID)
+
+ps_df_sub$OTUID <- gsub("s__", "",ps_df_sub$OTUID)
+ps_df_sub$OTUID <- gsub("_", " ",ps_df_sub$OTUID)
+```
+
+
+Plot distribution of taxa  
+```{r fig.height=4, fig.width=8}
+#reorder(OTUID, Abundance)
+#str(ps_df_sub$Abundance)
+ggplot(ps_df_sub, aes(x = Abundance, y = reorder(OTUID, Abundance), fill = Prevalence)) + 
+  geom_density_ridges() +
+  scale_fill_distiller(palette = "Spectral") +
+   #scale_fill_distiller(palette = "Spectral") +
+  theme_bw() + 
+  theme(axis.text.y = element_text(face = "italic")) +
+  ylab("") + xlab("Relative Abundance") 
+
+ggsave("species_selection/fig/candidate_taxa_distribution.pdf", h=4,w=9)
+ggsave("species_selection/fig/candidate_taxa_distribution.png", h=4,w=9)
+```
+
+
+```{r}
+sessionInfo()
+```
+
+

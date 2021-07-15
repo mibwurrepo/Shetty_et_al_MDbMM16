@@ -1,0 +1,719 @@
+---
+title: "Functional analysis of a synthetic gut microbiome reveals niche segregation as a driving force for assembly, stability, co-existence and activity"
+subtitle: "Temporal dynamics of MDb-MM community"
+author: "Sudarshan A. Shetty"
+date: "`r date()`"
+output: 
+  html_document: 
+    toc: yes
+    toc_depth: 3
+    toc_float: true
+    code_folding: show 
+    fig_caption: yes 
+---
+
+Investigate metabolit and amplicon data.     
+
+## Load pkgs  
+```{r pkgs, message=FALSE, warning=FALSE}
+### Setup analysis 
+#devtools::install_github("hallucigenia-sparsa/seqtime")
+suppressPackageStartupMessages({
+  library(syncomR)
+  library(dplyr)
+  library(tidyr)
+  library(seqtime)
+  library(ggpubr)
+  library(scales)
+  library(codyn)
+  library(knitr)
+  library(reshape2)
+  library(ggrepel)
+  library(patchwork)
+  #library(qgraph)
+  #library(DESeq2)
+  library(stringr)
+  #library(ggridges)
+})
+
+### Assign colors to key variables  
+#fasting_cols <- c("#C71585", "#fb8072", "#80b1d3")
+fasting_cols <- c(`DoS pulse`="#C71585",Overnight="#fb8072", `elongated fasting`="#80b1d3")
+
+fer_cols <- c(`Bioreactor A`= "#b2182b", 
+              `Bioreactor B`="#2166ac", 
+              `Bioreactor C` = "#35978f")
+colorsSCFA <- c(Acetate = "#CBD588", Propionate = "#5F7FC7", 
+                Butyrate = "orange", Isobutyrate= "#DA5724", 
+                Formate ="#508578", Lactate = "#CD9BCD", 
+                Glucose = "#AD6F3B", Fructose = "#673770",
+                Succinate = "#D14285")
+```
+
+
+# Results  
+
+## Applicability of Taylor's law  
+
+```{r taylor-1, warning=FALSE, message=FALSE, fig.cap="Appicability of Taylor’ s law"}
+#data("SyncomFiltData")
+ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor A")
+otu.b5.rel <- taxa_time_table(ps1.b5, normalize = TRUE, 
+                              time.col= 'Time_hr', remove.zero = TRUE)
+
+ps1.b6 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor B")
+otu.b6.rel <- taxa_time_table(ps1.b6, normalize = TRUE, 
+                              time.col= 'Time_hr', remove.zero = TRUE)
+
+ps1.b8 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor C")
+otu.b8.rel <- taxa_time_table(ps1.b8, normalize = TRUE, 
+                              time.col= 'Time_hr', remove.zero = TRUE)
+
+
+```
+
+
+```{r taylor-x, warning=FALSE, message=FALSE, fig.cap="Appicability of Taylor’ s law"}
+pdf("ms/figs/03_taylors.pdf", height = 3, width = 10)
+par(mfrow=c(1,3))
+f5.taylor <- taylor(otu.b5.rel, type = "taylor", boot = 1000, interval = "prediction",
+                    lower.conf = 0.025, upper.conf = 0.975, pseudo = 0,
+                    col = "black", header = "Bioreactor A", label = FALSE, plot = TRUE)
+f6.taylor <- taylor(otu.b6.rel, type = "taylor", boot = 1000, interval = "prediction",
+                    lower.conf = 0.025, upper.conf = 0.975, pseudo = 0,
+                    col = "black", header = "Bioreactor B", label = FALSE, plot = TRUE)
+f8.taylor <- taylor(otu.b8.rel, type = "taylor", boot = 1000, interval = "prediction",
+                    lower.conf = 0.025, upper.conf = 0.975, pseudo = 0,
+                    col = "black", header = "Bioreactor C", label = FALSE, plot = TRUE)
+dev.off()
+```
+
+```{r}
+pdf("ms/figs/03_taylors.png", height = 3, width = 10)
+par(mfrow=c(1,3))
+f5.taylor <- taylor(otu.b5.rel, type = "taylor", boot = 1000, interval = "prediction",
+                    lower.conf = 0.025, upper.conf = 0.975, pseudo = 0,
+                    col = "black", header = "Bioreactor A", label = FALSE, plot = TRUE)
+f6.taylor <- taylor(otu.b6.rel, type = "taylor", boot = 1000, interval = "prediction",
+                    lower.conf = 0.025, upper.conf = 0.975, pseudo = 0,
+                    col = "black", header = "Bioreactor B", label = FALSE, plot = TRUE)
+f8.taylor <- taylor(otu.b8.rel, type = "taylor", boot = 1000, interval = "prediction",
+                    lower.conf = 0.025, upper.conf = 0.975, pseudo = 0,
+                    col = "black", header = "Bioreactor C", label = FALSE, plot = TRUE)
+dev.off()
+```
+
+```{r taylor-gg, warning=FALSE, message=FALSE, fig.cap="Appicability of Taylor’ s law"}
+
+convert_taylor_gg <- function(taylor_obj){
+  tay_5 <- data.frame(logmeans=taylor_obj$logmeans,
+                       logmvar= taylor_obj$logvars,
+                       lowerConfMean= taylor_obj$lowerConfMean,
+                       upperConfMean= taylor_obj$upperConfMean,
+                       lowerConfVar= taylor_obj$lowerConfVar,
+                       upperConfVar= taylor_obj$upperConfVar)
+tay_5$taxon <- rownames(tay_5)
+tay_5$taxon <- gsub("_", " ", tay_5$taxon)
+p <- ggplot(tay_5, aes(logmeans, logmvar, label=taxon)) + 
+  geom_smooth(method='lm') + 
+  #geom_text_repel(alpha=0.25) + 
+  theme_syncom() + 
+  xlab("log(Mean)") + ylab("log(Variance)") + 
+  geom_linerange(aes(ymin = lowerConfVar, ymax = upperConfVar, color=taxon)) +
+  geom_linerange(aes(xmin = lowerConfMean, xmax = upperConfMean, color=taxon)) +
+  labs(subtitle = paste0("Taylor's Law \np-value: ",  
+                         round(taylor_obj$pval,10), " , adjusted R^2: ", 
+                         round(taylor_obj$adjR2,3), " , slope: ", 
+                         round(taylor_obj$slope, 3))) +
+    geom_point(aes(color=taxon),size=2) + 
+  scale_color_manual("Taxa",values=syncom_colors2("BacterialSpecies")) +
+  theme(legend.text = element_text(face = "italic"))
+return(p)
+}
+
+tay_bioA <- convert_taylor_gg(f5.taylor) + ggtitle("Bioreactor A")
+tay_bioB <- convert_taylor_gg(f6.taylor)+ ggtitle("Bioreactor A")
+tay_bioC <- convert_taylor_gg(f8.taylor)+ ggtitle("Bioreactor A")
+
+```
+
+
+### Temporal community assembly   
+
+Community succession
+
+```{r fig.height = 6, fig.width = 6, fig.align = "center"}
+
+syncom_rel <- microbiome::transform(SyncomFiltData, "compositional")
+ord.sn <- phyloseq::ordinate(syncom_rel, method="PCoA", distance = "canberra")
+
+comm.cng <- plot_ordination(syncom_rel, ord.sn, 
+                            color="Time_hr_num", label = "Day") 
+
+pdat <- comm.cng$data %>% arrange(Time_hr_num)
+p.succ <- ggplot(pdat, aes(x = Axis.1, y = Axis.2)) 
+p.succ <- p.succ +  geom_hline(aes(yintercept = 0), alpha = 0.1) + 
+  geom_vline(aes(xintercept = 0), alpha = 0.1)  + 
+  geom_point(aes(color = Time_hr_num), alpha = 0.6, size = 3)+
+  theme_syncom() + scale_color_distiller("Time (h)",palette = "Spectral",trans = "reverse") + facet_wrap(~StudyIdentifier, ncol=3, nrow=1) + xlab("PCoA 1 (25.4%)") + ylab("PCoA 2 (21.6%)")
+p.succ <- p.succ + geom_text_repel(aes(label=Day), size=2)
+
+p.succ <- p.succ + geom_path(alpha = 0.3, 
+                             arrow = arrow(angle = 15, length = unit(0.1, "inches"),
+                                           ends = "last", type = "closed")) 
+#p.succ
+
+```
+
+### Dynamics of the MDb-MM at community-level       
+
+Next, we test at community level the short-term dynamics by comparing community level similarity between subsequent timepoints.  
+Here too, we remove samples with short intervals.  
+```{r}
+set.seed(4551350)
+# remove short time samples  
+short_time_labels <- c("74.5h", "173h","438h", "434h", "390h")
+syncom_ps <- subset_samples(SyncomFiltData, !(Time_label %in% short_time_labels))
+
+```
+
+```{r}
+bioA <- subset_samples(syncom_ps, StudyIdentifier== "Bioreactor A")
+bioA.lg <- add_time_lag(bioA)
+
+bioB <- subset_samples(syncom_ps, StudyIdentifier== "Bioreactor B")
+bioB.lg <- add_time_lag(bioB)
+
+bioC <- subset_samples(syncom_ps, StudyIdentifier== "Bioreactor C")
+bioC.lg <- add_time_lag(bioC)
+
+```
+
+
+### Short-term community dynamics  
+```{r fig.height = 5, fig.width = 16, fig.align = "center", fig.cap= "Community level the short-term dynamics"}
+#data(SyncomFiltData)
+p.a <- temporal_turnover(bioA.lg, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "subsequent",
+                         plot = F) #+ geom_smooth()+ theme_syncom()
+
+p.b <- temporal_turnover(bioB.lg, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "subsequent",
+                         plot = F)#+ geom_smooth()+ theme_syncom()
+
+p.c <- temporal_turnover(bioC.lg, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "subsequent",
+                         plot = F)# + geom_smooth() + theme_syncom()
+#p.a + p.b + p.c 
+```
+
+```{r eval=FALSE}
+p.a$Bioreactor <- "Bioreactor A"
+p.b$Bioreactor <- "Bioreactor B"
+p.c$Bioreactor <- "Bioreactor C"
+df <- rbind(p.a,p.b,p.c)
+
+p1 <- ggplot(df, aes(t1, dist))
+p1 <- p1 + geom_line(aes(color=Bioreactor),size= 1) + 
+  scale_color_manual(values = fer_cols)+  
+  geom_point(aes(color = Bioreactor), alpha=0.6)+ scale_color_manual(values = fer_cols)+
+  ylab(paste0("Community dissimilarity\nto subsequent sample(s)")) + 
+  xlab("Time (hr)")
+#+ geom_label_repel() +
+
+p1 <- p1 + theme_syncom() 
+p1
+
+```
+
+Temporal patterns    
+```{r}
+#data(SyncomFiltData)
+# USE syncom_ps from stab prop
+ps.sycom.sub <- microbiome::transform(syncom_ps, "compositional")
+
+ps.sycom.df <- psmelt(ps.sycom.sub)
+
+codyn.df <- ps.sycom.df[,c("StudyIdentifier","Time_hr_num", "Species", "Abundance","Day")]
+
+```
+
+Mean rank shift  
+
+```{r fig.height = 5, fig.width = 16, fig.align = "center"}
+syncom_rankshift <- rank_shift(df=codyn.df,
+                               time.var = "Time_hr_num",
+                               species.var = "Species",
+                               abundance.var = "Abundance", 
+                               replicate.var = "StudyIdentifier")
+
+```
+
+[Temporal β diversity—A macroecological perspective](https://onlinelibrary.wiley.com/doi/10.1111/geb.13026)  
+
+```{r fig.height = 5, fig.width = 8, fig.align = "center", fig.cap= "Mean rank shift depicting changes in species ranks in community over time"}
+syncom_rankshift$year <- syncom_rankshift$year_pair
+
+syncom_rankshift <- syncom_rankshift %>% separate(year, c("A","B"), sep = "([\\-])")
+syncom_rankshift$time <- as.numeric(syncom_rankshift$B)
+
+syncom_rankshift <- subset(syncom_rankshift, year_pair != "0-4")
+
+max_mars <- syncom_rankshift %>%
+  group_by(StudyIdentifier) %>%
+  summarize(max.mrs = max(MRS, na.rm = T))
+syncom_rankshift <- syncom_rankshift %>%
+  left_join(max_mars)
+syncom_rankshift <- syncom_rankshift %>%
+  mutate(ismax = ifelse(MRS == max.mrs, T, F)) %>% 
+  mutate(reactor_time=paste0(StudyIdentifier,": ",year_pair,"h"))
+
+mrs_p <- ggplot(syncom_rankshift, aes(time, MRS, color=StudyIdentifier)) + 
+  geom_point(alpha=0.6) +
+  geom_line()+ scale_color_manual(values = fer_cols) + 
+  geom_text_repel(
+    data = subset(syncom_rankshift, ismax == TRUE),
+    aes(y = MRS, label = reactor_time),
+    nudge_y = 0.2, box.padding = .5, max.iter = 10000,
+    size = 3, color = "black", segment.alpha = .5,
+    fontface = "italic", direction = "both"
+  ) + theme_syncom() + xlab("Time (hr)") + ylab("Mean Rank Shift (MRS)") + 
+  scale_color_manual(values = fer_cols) + 
+  geom_vline(xintercept = 152, size=1, alpha=0.6, color="#e41a1c", lty=2) +
+  geom_vline(xintercept =248, size=1, alpha=0.6, color = "#377eb8",lty=2)
+#+   annotate("text",x=c(152,248),y=c(2.0, 2.2),label=c("B.hydrogenotrophica","Acetate Discontinued"),hjust=c(1,-0.5), face="italics=")
+#mrs_p
+```
+
+### Long-term variability   
+
+Next, we investigate how does the community behave in the long-term (here it is relative i.e. 20 days) experiment.  
+Do we see similar patterns in the three bioreactors?  
+
+#### Eveness/Uneveness  
+
+```{r fig.height = 5, fig.width = 8, fig.align = "center", fig.cap="Temporal evenness"}
+
+
+p.temp.div <- temporal_diversity(SyncomFiltData, 
+                                 time.col = 'Time_hr_num', 
+                                 div.measure = "gini") 
+
+ev.dat <- p.temp.div$data
+
+
+p.ev <- ggplot(p.temp.div$data, aes(x = time, Inequality)) + 
+  scale_color_manual(values = fer_cols) + 
+  theme_syncom() + geom_point(aes(color=StudyIdentifier),alpha=0.6) + 
+  geom_vline(xintercept = 152, size=1, alpha=0.4, color="#e41a1c", lty=2) +
+  geom_vline(xintercept =248, size=1, alpha=0.4, color = "#377eb8",lty=2) +
+  geom_line(aes(color=StudyIdentifier)) +
+  scale_color_manual(values = fer_cols) + 
+  xlab("Time (hr)")+ ylim(c(0.4,1)) 
+
+label_main = tibble( label=c(
+  "Bh added",
+  "Acetate removed"
+),
+time = c(152, 248),
+Inequality = c(0.95,0.87)
+#color = c("black", "blue", "black", "red"),
+#fill = c("cornsilk", "white", "lightblue1", "white")
+)
+
+p.ev <-p.ev  + geom_text(
+  data = label_main,
+  aes(x=time,
+      y=Inequality,label = label),
+  size=3,
+  hjust = 1, vjust = 1
+) + geom_segment(aes(x = 0.9, y = 3.5, xend = 152, yend = 1.5)) +
+  geom_segment(aes(x = 180, y = 3.5, xend = 248, yend = 1.5))
+
+```
+
+What about beta-diversity over time compared to first timepoint?   
+
+#### Community beta diversity  
+```{r fig.height = 5, fig.width = 16, fig.align = "center", , fig.cap="Divergence of MDb-MM over time compared to initial community"}
+bio.a <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor A")
+bio.b <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor B")
+bio.c <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor C")
+
+
+cor.test(abundances(bio.a, "compositional"), abundances(bio.b,"compositional"), method = "pearson")
+cor.test(abundances(bio.a,"compositional"), abundances(bio.c,"compositional"), method = "pearson")
+cor.test(abundances(bio.b,"compositional"), abundances(bio.c,"compositional"), method = "pearson")
+```
+
+
+```{r fig.height = 5, fig.width = 16, fig.align = "center", , fig.cap="Divergence of MDb-MM over time compared to initial community"}
+p.a <- temporal_turnover(bio.a, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "start",
+                         plot = F)# + theme_syncom()+ geom_smooth()
+
+p.b <- temporal_turnover(bio.b, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "start",
+                         plot = F)# + theme_syncom() + geom_smooth()
+
+p.c <- temporal_turnover(bio.c, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "start",
+                         plot = F)# + theme_syncom() + geom_smooth()
+#p.a+p.b+p.c
+
+#ggsave("figures/figure 3 temporal dynamics.pdf", height = 8, width = 16)
+```
+
+
+```{r eval=T, fig.height = 8, fig.width = 14}
+p.a$Bioreactor <- "Bioreactor A"
+p.b$Bioreactor <- "Bioreactor B"
+p.c$Bioreactor <- "Bioreactor C"
+df <- rbind(p.a,p.b,p.c)
+
+#plot_regression(dist ~ t1, meta(df))
+
+p1 <- ggplot(df, aes(t1, dist))
+p1 <- p1 + geom_line(aes(color=Bioreactor)) + 
+  geom_point(aes(color = Bioreactor), alpha=0.6)+ 
+  scale_color_manual(values = fer_cols)+ 
+  ylab(paste0("Community dissimilarity\nto starting sample")) + 
+  xlab("Time (hr)") + ylim(c(0.25,1)) +
+  geom_vline(xintercept = 152, size=1, alpha=0.6, color="#e41a1c", lty=2) +
+  geom_vline(xintercept =248, size=1, alpha=0.6, color = "#377eb8",lty=2)
+#+ geom_label_repel() +
+
+p1 <- p1  + theme_syncom() +geom_text(
+  data = label_main,
+  aes(x=time,
+      y=Inequality,label = label),
+  size=3,
+  hjust = 1, vjust = 1
+) 
+
+
+```
+
+```{r}
+#p1 + geom_smooth()
+p.succ / (tay_bioA + tay_bioB + tay_bioC) / (p.ev + p1+mrs_p) +  plot_layout(guides = "collect") + plot_annotation(tag_levels = ("A"))
+ggsave("ms/figs/04_comm_turnover_mrs.pdf", height = 9, width = 14)
+ggsave("ms/figs/04_comm_turnover_mrs.png", height = 9, width = 14, dpi=600)
+```
+
+### Convergence Community beta diversity  
+```{r fig.height = 5, fig.width = 16, fig.align = "center", , fig.cap="Convergence of MDb-MM over time compared to initial community"}
+
+pf.a <- temporal_turnover(bio.a, tree =NULL,
+                          time.col = 'Time_hr_num', 
+                          method = "canberra", 
+                          compositional = TRUE,
+                          compared.to = "final",
+                          plot = F)# + theme_syncom()+ geom_smooth()
+
+pf.b <- temporal_turnover(bio.b, tree =NULL,
+                          time.col = 'Time_hr_num', 
+                          method = "canberra", 
+                          compositional = TRUE,
+                          compared.to = "final",
+                          plot = F)# + theme_syncom() + geom_smooth()
+
+pf.c <- temporal_turnover(bio.c, tree =NULL,
+                          time.col = 'Time_hr_num', 
+                          method = "canberra", 
+                          compositional = TRUE,
+                          compared.to = "final",
+                          plot = F)# + theme_syncom() + geom_smooth()
+#p.a+p.b+p.c
+
+#ggsave("figures/figure 3 temporal dynamics.pdf", height = 8, width = 16)
+
+```
+
+
+```{r eval=T, fig.height = 4, fig.width = 8}
+pf.a$Bioreactor <- "Bioreactor A"
+pf.b$Bioreactor <- "Bioreactor B"
+pf.c$Bioreactor <- "Bioreactor C"
+df.f <- rbind(pf.a,pf.b,pf.c)
+
+#plot_regression(dist ~ t1, meta(df))
+
+p1.f <- ggplot(df.f, aes(t1, dist))
+p1.f <- p1.f + geom_line(aes(color=Bioreactor)) + 
+  scale_color_manual(values = fer_cols)+  
+  geom_point(aes(color = Bioreactor), alpha=0.6)+ scale_color_manual(values = fer_cols)
+p1.f <-  p1.f + ylab(paste0("Community dissimilarity\nto final sample")) + xlab("Time (hr)") + geom_vline(xintercept = 152, size=1, alpha=0.6, color="#e41a1c", lty=2) + ylim(c(0,1)) +
+  geom_vline(xintercept =248, size=1, alpha=0.6, color = "#377eb8",lty=2)
+#+ geom_label_repel() +
+
+colnames(label_main) <- c("label","t1","dist") # modify for this input daTA
+
+p1.f <- p1.f + theme_syncom() +geom_text(
+  data = label_main,
+  aes(x=t1,
+      y=dist,label = label),
+  size=3,
+  hjust = 1, vjust = 1
+) 
+
+p1.f
+
+```
+
+Pattern of variability within a community.  
+```{r  }
+#data(SyncomFiltData)
+# USE syncom_ps from stab prop
+source("../codes/codyn_canberra.R")
+source("../codes/codyn_canberra_utilities.R")
+ps.sycom.sub <- microbiome::transform(syncom_ps, "compositional")
+
+ps.sycom.df <- psmelt(ps.sycom.sub)
+
+codyn.df <- ps.sycom.df[,c("StudyIdentifier","Time_hr_num", "Species", "Abundance","Day")]
+#codyn.df.sub <- subset(codyn.df, Time_hr>=248)
+
+rate.res <- rate_change_syncom(df=codyn.df,
+                               time.var = "Time_hr_num",
+                               species.var = "Species",
+                               abundance.var = "Abundance", 
+                               replicate.var = "StudyIdentifier")
+rownames(rate.res) = NULL
+
+# https://www.semanticscholar.org/paper/A-method-to-determine-rates-and-patterns-of-in-Collins-Micheli/927fce58d532adc060f68609174124280cfbb6b1
+comm.res <- rate_change_interval_syncom(df=codyn.df,
+                                        time.var = "Time_hr_num",
+                                        species.var = "Species",
+                                        abundance.var = "Abundance", 
+                                        replicate.var = "StudyIdentifier")
+
+rate_change_interval_plt <- ggscatter(comm.res,"interval", "distance", 
+                                      facet.by = "StudyIdentifier",
+                                      color= "StudyIdentifier",
+                                      palette=fer_cols, alpha=0.5,
+                                      add = "reg.line",
+                                      add.params= list(color = "black"),
+                                      conf.int=T)+  
+  stat_cor(method = "spearman", label.x = 10, label.y =0.8) +
+  #stat_regline_equation(label.x = 10, label.y = 0.85) + 
+  theme_syncom() + xlab("Time lag") + ylab("Canberra distance")
+
+```
+
+```{r}
+p1.f / rate_change_interval_plt +  plot_layout(guides = "collect") + plot_annotation(tag_levels = ("A"))
+
+ggsave("ms/figs/04a_rate_change_od_ev_converg.pdf", height = 6, width = 12)
+ggsave("ms/figs/04a_rate_change_od_ev_converg.png", height = 6, width = 12, dpi=600)
+
+```
+
+
+## Stability properties of minimal microbiome  
+
+### Calculate stability properties   
+
+```{r message=FALSE}
+#library(syncomR)
+data("SyncomFiltData")
+syncom_ps.a <- subset_samples(syncom_ps, Time_hr_num < 365)
+bio.a <- subset_samples(syncom_ps.a, StudyIdentifier== "Bioreactor A")
+bio.b <- subset_samples(syncom_ps.a, StudyIdentifier== "Bioreactor B")
+bio.c <- subset_samples(syncom_ps.a, StudyIdentifier== "Bioreactor C")
+
+
+stab.a <- stability_properties(bio.a, time.col = "Time_hr",
+                               experimentStart = 152,
+                               tref = 248)
+stab.b <- stability_properties(bio.b, time.col = "Time_hr",
+                               experimentStart = 152,
+                               tref = 248
+)
+stab.c <- stability_properties(bio.c, time.col = "Time_hr",
+                               experimentStart = 152,
+                               tref = 248)
+#,                                 tref = 152
+```
+
+
+
+```{r}
+# radii radii for reference space
+r_Canberra_a<- max(stab.a$data$canberra[stab.a$data$referencePhase == TRUE])
+print(paste0("Reference space for Bioreactor A: ", round(r_Canberra_a, 3)))
+
+r_Canberra_b<- max(stab.b$data$canberra[stab.b$data$referencePhase == TRUE])
+print(paste0("Reference space for Bioreactor B: ", round(r_Canberra_b, 3)))
+
+r_Canberra_c<- max(stab.c$data$canberra[stab.c$data$referencePhase == TRUE])
+print(paste0("Reference space for Bioreactor C: ", round(r_Canberra_c, 3)))
+```
+
+```{r fig.height = 5, fig.width = 16, fig.align = "center", message=FALSE, fig.cap="Resistence (RS) of MDb-MM"}
+res.a <- plot_resistance(stab.a) + theme_syncom() + ggtitle("Bioreactor A") +
+  ylab(expression("Deviation (d) from s"[ref]))+ 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 0.5)) + 
+  coord_polar() + theme_minimal() + ylim(-0.2, 0.6) + 
+  theme(
+    panel.background = element_rect(fill = "white"),
+    plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))
+
+res.b <- plot_resistance(stab.b)  + theme_syncom() + ggtitle("Bioreactor B") +
+  ylab(expression("Deviation (d) from s"[ref]))+ 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 0.5)) + 
+  coord_polar() + theme_minimal() + ylim(-0.2, 0.6) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))
+
+res.c <- plot_resistance(stab.c) + theme_syncom() + ggtitle("Bioreactor C") +
+  ylab(expression("Deviation (d) from s"[ref]))+ 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 0.5)) + 
+  coord_polar() + theme_minimal() + ylim(-0.2, 0.6) + theme(
+    panel.background = element_rect(fill = "white"),
+    plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))
+
+resistance_plot <- res.a+res.b+res.c + plot_layout(guides = "collect")
+```
+
+### Resilience   
+*Resilience* describes the ability of a system to recover to a reference state after a perturbation.  
+Online resilience overtime.  
+Resilience value of 0 means system is pushed away from the reference state.  
+Resilience value of >0 means system is approaches the reference state.     
+Resilience value of 1 indicates the perfect return to the reference state and lower values indicating partial recovery
+
+```{r fig.height = 5, fig.width = 16, fig.align = "center", message=FALSE, fig.cap="Resilience (RL) of MDb-MM"}
+relis_a <- plot_resilience(stab.a, method = "canberra") + ylim(-0.1,0.5) + coord_polar()+ theme_minimal()+ theme(
+  panel.background = element_rect(fill = "white"),
+  plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))
+relis_b <- plot_resilience(stab.b, method = "canberra") + ylim(-0.1,0.5)+ coord_polar()+ theme_minimal()+ theme(
+  panel.background = element_rect(fill = "white"),
+  plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))
+relis_c <- plot_resilience(stab.c, method = "canberra") + ylim(-0.1,0.5)+ coord_polar()+ theme_minimal() + theme(
+  panel.background = element_rect(fill = "white"),
+  plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))
+
+resislince_plot <- relis_a+relis_b+relis_c + plot_layout(guides = "collect")
+```
+
+```{r fig.height = 5, fig.width = 16, fig.align = "center", message=FALSE, fig.cap="Resistence (RS) of MDb-MM", eval=T}
+
+stab.plot <- (resistance_plot) / (resislince_plot) + plot_layout(guides = "collect", widths = c(1,3)) + plot_annotation(tag_levels = ("A")) 
+stab.plot[[1]] <- stab.plot[[1]] + plot_layout(tag_level = 'new')
+stab.plot[[2]] <- stab.plot[[2]] + plot_layout(tag_level = 'new')
+stab.plot + plot_annotation(tag_levels = c('A', '1')) 
+
+ggsave("ms/figs/05_resistance_resilience.pdf", height = 8, width = 16)
+ggsave("ms/figs/05_resistance_resilience.png", height = 8, width = 16, dpi=600)
+
+```
+
+### Supplementary all subsequent pertubation  
+```{r message=FALSE, warning=FALSE}
+bio.a.all <- subset_samples(syncom_ps, StudyIdentifier== "Bioreactor A")
+bio.b.all <- subset_samples(syncom_ps, StudyIdentifier== "Bioreactor B")
+bio.c.all <- subset_samples(syncom_ps, StudyIdentifier== "Bioreactor C")
+
+stab.a.all <- stability_properties(bio.a.all, time.col = "Time_hr",
+                                   experimentStart = 152,
+                                   tref = 248)
+stab.b.all <- stability_properties(bio.b.all, time.col = "Time_hr",
+                                   experimentStart = 152,
+                                   tref = 248
+)
+stab.c.all <- stability_properties(bio.c.all, time.col = "Time_hr",
+                                   experimentStart = 152,
+                                   tref = 248)
+double_dil_time <- subset(meta(bio.a), Pertubation == "double_dilution_rate")$Time_hr_num
+
+fasting_elongated_time <- subset(meta(bio.a), Pertubation == "fasting_elongated")$Time_hr_num
+
+res.a.all <- plot_resistance(stab.a.all) + theme_syncom() + ggtitle("Bioreactor A") +
+  ylab(expression("Deviation (d) from s"[ref]))+ 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 0.5)) + 
+  coord_polar() + theme_minimal() + ylim(-0.2, 0.6) + 
+  theme(
+    panel.background = element_rect(fill = "white"),
+    plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))+
+  geom_vline(xintercept = c(432,436), lty=2, color="#5834eb", size=1, alpha=0.5)+
+  geom_vline(xintercept = c(365,408), lty=2, color="#a3129c", size=1, alpha=0.5)
+
+res.b.all <- plot_resistance(stab.b.all)  + theme_syncom() + ggtitle("Bioreactor B") +
+  ylab(expression("Deviation (d) from s"[ref]))+ 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 0.5)) + 
+  coord_polar() + theme_minimal() + ylim(-0.2, 0.6) + theme(
+    panel.background = element_rect(fill = "white"),
+    plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))+
+  geom_vline(xintercept = c(432,436), lty=2, color="#5834eb", size=1, alpha=0.5)+
+  geom_vline(xintercept = c(365,408), lty=2, color="#a3129c", size=1, alpha=0.5)
+
+res.c.all <- plot_resistance(stab.c.all) + theme_syncom() + ggtitle("Bioreactor C") +
+  ylab(expression("Deviation (d) from s"[ref]))+ 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 0.5)) + 
+  coord_polar() + theme_minimal() + ylim(-0.2, 0.6) + theme(
+    panel.background = element_rect(fill = "white"),
+    plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))+
+  geom_vline(xintercept = double_dil_time, lty=2, color="#5834eb")+
+  geom_vline(xintercept = c(432,436), lty=2, color="#5834eb", size=1, alpha=0.5)+
+  geom_vline(xintercept = c(365,408), lty=2, color="#a3129c", size=1, alpha=0.5)
+
+resistence.plot.all <- res.a.all+res.b.all+res.c.all + plot_layout(guides = "collect")
+
+
+### Resilience all 
+
+relis_a.all <- plot_resilience(stab.a.all, method = "canberra") + ylim(-0.1,0.5) + coord_polar()+ theme_minimal()+ theme(
+  panel.background = element_rect(fill = "white"),
+  plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))
+
+relis_b.all <- plot_resilience(stab.b.all, method = "canberra") +
+  ylim(-0.1,0.5)+ coord_polar()+ theme_minimal()+ theme(
+    panel.background = element_rect(fill = "white"),
+    plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))
+
+relis_c.all <- plot_resilience(stab.c.all, method = "canberra") + ylim(-0.1,0.5)+ coord_polar()+ theme_minimal() + theme(
+  panel.background = element_rect(fill = "white"),
+  plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"))
+
+resislince_plot.all <- relis_a.all+relis_b.all+relis_c.all + plot_layout(guides = "collect")
+
+stab.plot.all <- (resistence.plot.all) / (resislince_plot.all) + plot_layout(guides = "collect", widths = c(1,3)) + plot_annotation(tag_levels = ("A")) 
+stab.plot.all[[1]] <- stab.plot.all[[1]] + plot_layout(tag_level = 'new')
+stab.plot.all[[2]] <- stab.plot.all[[2]] + plot_layout(tag_level = 'new')
+stab.plot.all + plot_annotation(tag_levels = c('A', '1')) 
+
+ggsave("ms/figs/05a_resistance_resilience.pdf", height = 8, width = 16)
+ggsave("ms/figs/05a_resistance_resilience.png", height = 8, width = 16, dpi=600)
+
+```
+
+```{r}
+sessionInfo()
+```
+

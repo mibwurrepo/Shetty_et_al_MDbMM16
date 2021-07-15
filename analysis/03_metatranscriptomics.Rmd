@@ -1,0 +1,1103 @@
+---
+title: "Minimalist Approach for Deciphering the Ecophysiology of Human Gut Microbes"
+subtitle: "Transcriptional activity of MDb-MM"
+author: "Sudarshan A. Shetty"
+date: "`r date()`"
+output: 
+  html_document: 
+    toc: yes
+    toc_depth: 2
+    toc_float: true
+    code_folding: show 
+    fig_caption: yes 
+---
+
+## Load pkgs  
+```{r pkgs, message=FALSE, warning=FALSE}
+### Setup anlaysis 
+suppressPackageStartupMessages({
+  library(syncomR)
+  library(dplyr)
+  library(tidyr)
+  library(ggpubr)
+  library(scales)
+  library(knitr)
+  library(reshape2)
+  library(ggrepel)
+  library(patchwork)
+  library(qgraph)
+  library(DESeq2)
+  library(stringr)
+  library(edgeR)
+  library(ggridges)
+})
+#BiocManager::install("DESeq2")
+#BiocManager::install("edgeR")
+
+### Assign colors to key variables  
+fasting_cols <- c("#1b9e77", "#d95f02", "#7570b3")
+
+fer_cols <- c(`Bioreactor A`= "#b2182b", 
+              `Bioreactor B`="#2166ac", 
+              `Bioreactor C` = "#35978f")
+
+colorsSCFA <- c(Acetate = "#CBD588", Propionate = "#5F7FC7", 
+                Butyrate = "orange", Isobutyrate= "#DA5724", 
+                Formate ="#508578", Lactate = "#CD9BCD", 
+                Glucose = "#AD6F3B", Fructose = "#673770",
+                Succinate = "#D14285")
+```
+
+```{r eval=T}
+
+dir.create("ms/modules")
+dir.create("ms/modules/figures")
+dir.create("ms/modules/tables")
+```
+
+
+## Transcriptional behavior of MDb-MM     
+### Gut metabolic module  
+
+We used the gut metabolic module framework in which we used metabolic module expression for short-chain fatty acids pathways.
+#### Functional ordination      
+```{r}
+ps1 <- SyncomFiltData
+mods <- readRDS("../data/mdbmm_gmm_out_apr2020.rds")
+
+modsDF <- cbind(mods@annotation, slot(mods, "abundance"))
+
+#modsDF
+curatedGMM_names <- read.table("../data/curated_gmm_trophic_levels.txt", header=T, sep="\t")
+#head(curatedGMM_names)
+
+fil_list <- modsDF$Module
+curatedGMM_names_filt <- filter(curatedGMM_names, curatedGMM_names$module_id %in% fil_list)
+
+#dim(curatedGMM_names_filt)
+#curatedGMM_names_filt$V1
+colnames(curatedGMM_names_filt) <- c("Module", "Names", colnames(curatedGMM_names_filt)[3:10])
+
+module_df <- merge(modsDF, curatedGMM_names_filt, by.x="Module")
+
+mods_sum2 <- modsDF %>% group_by(Module) %>% summarize_if(is.numeric,sum,na.rm = TRUE)
+
+mods_sum <- as.data.frame(mods_sum2)
+rownames(mods_sum) <- mods_sum$Module
+#mods_sum.vfa <- as.data.frame(filter(mods_sum.vfa, colnames(mods_sum.vfa) %in% rownames(hplc)))
+colnames(mods_sum) <- c("Module","F8T176","F6T248","F8T152","F6T74.5", "F8T52","F5T240","F5T264", "F8T24","F5T52","F6T24","F8T48","F5T248","F5T56","F5T32","F6T240","F6T48","F8T28","F6T28","F6T264","F8T264","F8T240","F5T74.5" , "F5T152" ,"F5T176","F8T74.5", "F6T56","F5T24","F8T32","F6T52","F8T56","F6T32","F5T28","F6T152" ,"F5T48","F8T248","F6T176")
+mods_sum <- as.data.frame(t(mods_sum[,-1]))
+head(mods_sum)
+
+
+#mods_sum.vfa <- t(as.data.frame(mods_sum.vfa))
+gmm.ps <- merge_phyloseq(otu_table(mods_sum, taxa_are_rows = F), sample_data(ps1))
+```
+
+
+```{r}
+set.seed(4231)
+# proj <- get_ordination(pseq, "MDS", "bray")
+gmm.ps.rl <- microbiome::transform(gmm.ps, "compositional")
+ord.gmm <- ordinate(gmm.ps, method="PCoA", distance = "canberra")
+
+gmm.cng <- plot_ordination(gmm.ps.rl, ord.gmm, color="Time_hr_num", label = "Day") 
+
+pdat_gmm <- gmm.cng$data %>% arrange(Time_hr_num)
+
+gmm_evals1 <- round(ord.gmm$values$Eigenvalues[1] / sum(ord.gmm$values$Eigenvalues) * 100, 2)
+gmm_evals2 <- round(ord.gmm$values$Eigenvalues[2] / sum(ord.gmm$values$Eigenvalues) * 100, 2)
+
+p.gmm.succ <- ggplot(pdat_gmm, aes(x = Axis.1, y = Axis.2)) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.1) + 
+  geom_vline(aes(xintercept = 0), alpha = 0.1)  + 
+  geom_point(aes(color = Time_hr_num), alpha = 0.6, size = 3)+
+  theme_syncom() + scale_color_distiller(palette = "Spectral",trans = "reverse") + facet_wrap(~StudyIdentifier, ncol=3, nrow=1) + 
+  xlab(paste0("PCoA 1 ", "(", gmm_evals1, ")")) + 
+  ylab(paste0("PCoA 2 ", "(", gmm_evals2, ")"))
+
+p.gmm.succ <- p.gmm.succ + geom_text_repel(aes(label=Time_hr_num), size=2)
+
+p.gmm.succ <- p.gmm.succ + geom_path(alpha = 0.3, arrow = arrow(angle = 15, length = unit(0.1, "inches"),
+                                                                ends = "last", type = "closed")) + ggtitle("GMM")
+#p.gmm.succ
+```
+
+#### Amplicon subset  
+```{r}
+set.seed(23234) 
+ps.fil <- subset_samples(SyncomFiltData, RNASeq == "YES")
+ps.amp <- microbiome::transform(ps.fil, "compositional")
+
+ord.amp <- ordinate(ps.amp, method="PCoA", distance = "canberra")
+
+amp.cng <- plot_ordination(ps.amp, ord.amp, color="Time_hr_num", label = "Day") 
+
+amp_evals1 <- round(ord.amp$values$Eigenvalues[1] / sum(ord.amp$values$Eigenvalues) * 100, 2)
+amp_evals2 <- round(ord.amp$values$Eigenvalues[2] / sum(ord.amp$values$Eigenvalues) * 100, 2)
+
+pdat_amp <- amp.cng$data %>% arrange(Time_hr_num)
+p.amp.succ <- ggplot(pdat_amp, aes(x = Axis.1, y = Axis.2)) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.1) + 
+  geom_vline(aes(xintercept = 0), alpha = 0.1)  + 
+  geom_point(aes(color = Time_hr_num), alpha = 0.6, size = 3)+
+  theme_syncom() + scale_color_distiller(palette = "Spectral",trans = "reverse") + facet_wrap(~StudyIdentifier, ncol=3, nrow=1) + 
+  xlab(paste0("PCoA 1 ", "(", amp_evals1, ")")) + 
+  ylab(paste0("PCoA 2 ", "(", amp_evals2, ")"))
+p.amp.succ <- p.amp.succ + geom_text_repel(aes(label=Time_hr_num), size=2)
+
+p.amp.succ <- p.amp.succ + geom_path(alpha = 0.3, arrow = arrow(angle = 15, length = unit(0.1, "inches"),
+                                                                ends = "last", type = "closed")) + ggtitle("Amplicon")
+#p.amp.succ
+
+```
+
+#### KEGG KO  
+
+```{r}
+data("SynComRNAKEGG")
+kegg <- SynComRNAKEGG
+
+#head(kegg)
+
+kegg_sum2 <- kegg %>% group_by(KOID) %>% summarize_if(is.numeric,sum,na.rm = TRUE)
+
+kegg_sum <- as.data.frame(kegg_sum2)
+rownames(kegg_sum) <- kegg_sum$KOID
+#mods_sum.vfa <- as.data.frame(filter(mods_sum.vfa, colnames(mods_sum.vfa) %in% rownames(hplc)))
+
+kegg_sum_1 <- kegg_sum[,-1]
+#mods_sum.vfa <- t(as.data.frame(mods_sum.vfa))
+colnames(kegg_sum_1) <- gsub("A", ".",colnames(kegg_sum_1) )
+# Make KEGG heirarchy  
+# K00334 K18330 K18331 K18332
+#head(kegg)
+## Counts per million normalization
+kegg.cmp <- edgeR::cpm(kegg_sum_1)
+
+#write.csv(kegg_sum_1, "mtrans_syncom/data/kegg_cmp.csv")
+#write.csv(kegg, "mtrans_syncom/data/kegg_raw_counts_all.csv")
+
+#head(kegg.cmp)
+keg.class <- kegg[,c("KOID", "Level_3", "KOGeneName")]
+
+#ps1 <- SyncomFiltData
+
+kegg.ps <- merge_phyloseq(otu_table(kegg.cmp, taxa_are_rows = T), sample_data(ps1))
+
+```
+
+```{r}
+set.seed(4268231)
+
+ord.kegg <- ordinate(kegg.ps, method="PCoA", distance = "canberra")
+kegg.ps <- microbiome::transform(kegg.ps, "compositional")
+kegg.cng <- plot_ordination(kegg.ps, ord.kegg, color="Time_hr_num", label = "Day") 
+
+kegg_evals1 <- round(ord.kegg$values$Eigenvalues[1] / sum(ord.kegg$values$Eigenvalues) * 100, 2)
+kegg_evals2 <- round(ord.kegg$values$Eigenvalues[2] / sum(ord.kegg$values$Eigenvalues) * 100, 2)
+
+
+pdat_kegg <- kegg.cng$data %>% arrange(Time_hr_num)
+p.kegg.succ <- ggplot(pdat_kegg, aes(x = Axis.1, y = Axis.2)) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.1) + 
+  geom_vline(aes(xintercept = 0), alpha = 0.1)  + 
+  geom_point(aes(color = Time_hr_num), alpha = 0.6, size = 3)+
+  theme_syncom() + scale_color_distiller(palette = "Spectral",trans = "reverse") + facet_wrap(~StudyIdentifier, ncol=3, nrow=1) +  
+  xlab(paste0("PCoA 1 ", "(", kegg_evals1, ")")) + 
+  ylab(paste0("PCoA 2 ", "(", kegg_evals2, ")"))
+p.kegg.succ <- p.kegg.succ + geom_text_repel(aes(label=Time_hr_num), size=2)
+
+p.kegg.succ <- p.kegg.succ + geom_path(alpha = 0.3, 
+                                       arrow = arrow(angle = 15, 
+                                                     length = unit(0.1, "inches"),
+                                                     ends = "last", type = "closed")) + ggtitle("KEGG KO")
+#p.kegg.succ
+
+```
+
+```{r fig.height=8, fig.width=14}
+comm_ords_plots <- p.amp.succ/ p.kegg.succ / p.gmm.succ +  plot_layout(guides = "collect") + plot_annotation(tag_levels = ("A"))
+ggsave("ms/modules/figures/01_amp_ko_gmm_ord.pdf", height = 8, width = 12)
+ggsave("ms/modules/figures/01_amp_ko_gmm_ord.png", height = 8, width = 12, dpi=600)
+```
+
+### Compare between composition and function  
+
+```{r}
+suppressPackageStartupMessages(library(vegan))
+suppressPackageStartupMessages(library(ade4))
+
+abun_otu <- t(abundances(ps.amp))
+abun_gmm <- t(abundances(gmm.ps))
+abun_keg <- t(abundances(kegg.ps))
+# sort to match otu matrix
+abun_gmm <- abun_gmm[rownames(abun_otu),]
+abun_keg <- abun_keg[rownames(abun_otu),]
+
+otu.canb <- vegdist(abun_otu, method = "canberra")
+gmm.canb <- vegdist(abun_gmm, method = "canberra")
+keg.canb <- vegdist(abun_keg, method = "canberra")
+
+# Mantel test
+otu_gmm = mantel(otu.canb, gmm.canb, method = "spearman", 
+                 permutations = 999, na.rm = TRUE)
+otu_gmm
+
+otu_kegg = mantel(otu.canb, keg.canb, method = "spearman", 
+                  permutations = 999, na.rm = TRUE)
+otu_kegg
+gmm_kegg = mantel(gmm.canb, keg.canb, method = "spearman", 
+                  permutations = 999, na.rm = TRUE)
+gmm_kegg
+
+
+amp_dist = as.vector(otu.canb)
+gmm_dist = as.vector(gmm.canb)
+keg_dist = as.vector(keg.canb)
+
+all_dist = data.frame(amp_dist,gmm_dist,keg_dist)
+
+annot_amp_gmm <- data.frame(
+  x = c(0.05,0.05),
+  y = c(0.55,0.50),
+  label = c(paste0("r= ", round(otu_gmm$statistic,digits = 2)), paste0("p= ", otu_gmm$signif))
+)
+
+
+amp_gmm_plot <- ggplot(all_dist, aes(y = amp_dist, x = gmm_dist)) + 
+  geom_point(size = 4, fill = "grey70", alpha=0.5) + 
+  geom_smooth(method = "lm", colour = "steelblue") + 
+  labs(x = "Gut metabolic modules (Canberra)", y = "Amplicon (Canberra)") +
+  theme_syncom() 
+
+amp_gmm_plot <- amp_gmm_plot + geom_text(data=annot_amp_gmm, aes( x=x, y=y, label=label), 
+                                         color="#4c4c4c")
+##############################################3
+annot_amp_keg <- data.frame(
+  x = c(0.2,0.2),
+  y = c(0.55,0.50),
+  label = c(paste0("r= ", round(otu_kegg$statistic,digits = 2)), paste0("p= ", otu_kegg$signif))
+)
+
+amp_kegg_plot <- ggplot(all_dist, aes(y = amp_dist, x = keg_dist)) + 
+  geom_point(size = 4, fill = "grey70", alpha=0.5) + 
+  geom_smooth(method = "lm", colour = "steelblue") + 
+  labs(x = "KEGG ortholog (Canberra)", y = "Amplicon (Canberra)") +
+  theme_syncom() 
+
+amp_kegg_plot <- amp_kegg_plot + geom_text(data=annot_amp_keg, aes( x=x, y=y, label=label), 
+                                           color="#4c4c4c")
+
+##############################################3
+annot_gmm_keg <- data.frame(
+  x = c(0.2,0.2),
+  y = c(0.55,0.50),
+  label = c(paste0("r= ", round(gmm_kegg$statistic,digits = 2)), paste0("p= ", gmm_kegg$signif))
+)
+
+gmm_kegg_plot <- ggplot(all_dist, aes(y = keg_dist, x =  gmm_dist)) + 
+  geom_point(size = 4, fill = "grey70", alpha=0.5) + 
+  geom_smooth(method = "lm", colour = "steelblue") + 
+  labs(x ="Gut metabolic modules (Canberra)" , y = "KEGG ortholog (Canberra)") +
+  theme_syncom() 
+
+gmm_kegg_plot <- gmm_kegg_plot + geom_text(data=annot_gmm_keg, 
+                                           aes( x=x, y=y, label=label), 
+                                           color="#4c4c4c")
+
+
+mantel_plot <- amp_gmm_plot + amp_kegg_plot + gmm_kegg_plot 
+ggsave("ms/modules/figures/01_mantel_test.pdf", height = 3, width = 9)
+ggsave("ms/modules/figures/01_mantel_test.png", height = 3, width = 9, dpi = 600)
+```
+
+
+#### Differential analysis modules  
+
+**First phase**   
+
+Compare 48h with 52h
+```{r}
+gmm.ps.a <- subset_samples(gmm.ps, Time_hr %in% c(48,52))
+diagdds.a = phyloseq_to_deseq2(gmm.ps.a, ~ Fasting )
+
+diagdds.a = DESeq(diagdds.a, test="Wald", fitType="parametric")
+res.a = results(diagdds.a, cooksCutoff = FALSE)
+
+sigtab.a <- as.data.frame(res.a)
+# read from previous
+module_names <- module_df %>% distinct(Names, Module)
+
+
+sigtab.a$Module <- rownames(sigtab.a)
+sigtab.a <- sigtab.a %>% full_join(module_names)
+
+
+
+p.v1 <- ggmaplot(sigtab.a, main = expression("YES" %->% "NO"),
+                 fdr = 0.01, fc = 1.5, size = 2,
+                 palette = c("#fb8072","#C71585", "darkgray"),
+                 genenames= as.vector(sigtab.a$Names),
+                 top= 40,
+                 legend = "top",
+                 font.label = 8,
+                 font.legend = "bold",
+                 font.main = "bold",
+                 ggtheme = theme_syncom()) + ggtitle("48 h vs 52 h") + coord_flip()
+
+#ggsave("results/figures/supp_gmm_deseq_change_a.pdf", height = 5, width = 8)
+#ggsave("results/figures/supp_gmm_deseq_change_a.png", height = 5, width = 8, dpi=600)
+p.v1 
+```
+
+Compare 52h with 56h
+```{r}
+gmm.ps.b <- subset_samples(gmm.ps, Time_hr %in% c(52,56))
+diagdds.b = phyloseq_to_deseq2(gmm.ps.b, ~ Time_hr )
+
+diagdds.b = DESeq(diagdds.b, test="Wald", fitType="parametric")
+res.b = results(diagdds.b, cooksCutoff = FALSE)
+
+sigtab.b <- as.data.frame(res.b)
+# read from previous
+module_names <- module_df %>% distinct(Names, Module)
+
+
+sigtab.b$Module <- rownames(sigtab.b)
+sigtab.b <- sigtab.b %>% full_join(module_names)
+
+p.v2 <- ggmaplot(sigtab.b, main = expression("YES" %->% "NO"),
+                 fdr = 0.01, fc = 1.5, size = 2,
+                 palette = c("#fb8072","#C71585", "darkgray"),
+                 genenames= as.vector(sigtab.b$Names),
+                 top= 40,
+                 legend = "top",
+                 font.label = 8,
+                 font.legend = "bold",
+                 font.main = "bold",
+                 ggtheme = theme_syncom()) + ggtitle("52 h vs 56 h") + coord_flip()
+```
+
+
+Compare 240h with 248h
+```{r}
+gmm.ps.c <- subset_samples(gmm.ps, Time_hr %in% c(240,248))
+diagdds.c = phyloseq_to_deseq2(gmm.ps.c, ~ Fasting )
+
+diagdds.c = DESeq(diagdds.c, test="Wald", fitType="parametric")
+res.c = results(diagdds.c, cooksCutoff = FALSE)
+
+sigtab.c <- as.data.frame(res.c)
+# read from previous
+module_names <- module_df %>% distinct(Names, Module)
+
+
+sigtab.c$Module <- rownames(sigtab.c)
+sigtab.c <- sigtab.c %>% full_join(module_names)
+
+p.v3 <- ggmaplot(sigtab.c, main = expression("YES" %->% "NO"),
+                 fdr = 0.01, fc = 1.5, size = 2,
+                 palette = c("#fb8072","#C71585", "darkgray"),
+                 genenames= as.vector(sigtab.c$Names),
+                 top= 40,
+                 legend = "top",
+                 font.label = 8,
+                 font.legend = "bold",
+                 font.main = "bold",
+                 ggtheme = theme_syncom()) + ggtitle("240 h vs 248 h")+ coord_flip()
+```
+
+Compare 248h with 264h
+```{r}
+gmm.ps.d <- subset_samples(gmm.ps, Time_hr %in% c(248,264))
+diagdds.d = phyloseq_to_deseq2(gmm.ps.d, ~ Fasting )
+
+diagdds.d = DESeq(diagdds.d, test="Wald", fitType="parametric")
+res.d = results(diagdds.d, cooksCutoff = FALSE)
+
+sigtab.d <- as.data.frame(res.d)
+# read from previous
+module_names <- module_df %>% distinct(Names, Module)
+
+
+sigtab.d$Module <- rownames(sigtab.d)
+sigtab.d <- sigtab.d %>% full_join(module_names)
+
+p.ms <- ggmaplot(sigtab.d, main = expression("YES" %->% "NO"),
+                 fdr = 0.01, fc = 1.5, size = 2,
+                 palette = c("#fb8072","#C71585", "darkgray"),
+                 genenames= as.vector(sigtab.d$Names),
+                 top= 40,
+                 legend = "top",
+                 font.label = 8,
+                 font.legend = "bold",
+                 font.main = "bold",
+                 ggtheme = theme_syncom()) + ggtitle("248 h vs 264 h")+ coord_flip()
+p.ms 
+
+```
+
+
+```{r}
+maplots<- p.v1 + p.v3 + p.ms +  plot_layout(guides = "keep")
+
+#comm_ords_plots | maplots  +  plot_layout(guides = "keep",widths = c(1,3)) + plot_annotation(tag_levels = "A")
+
+mantel_plot / maplots  +  plot_layout(guides = "keep",heights = c(1,2)) + plot_annotation(tag_levels = "A")
+
+ggsave("ms/modules/figures/01_gmm_diff_analysis.pdf", height = 10, width = 14)
+ggsave("ms/modules/figures/01_gmm_diff_analysis.png", height = 10, width = 14, dpi=600)
+```
+
+save excel file 
+```{r}
+library("xlsx")
+# Write the first data set in a new workbook
+write.xlsx(sigtab.a, file = "ms/modules/tables/gmm_deseq_results.xlsx",
+           sheetName = "48hvs52h", append = FALSE)
+# Add a second data set in a new worksheet
+write.xlsx(sigtab.b, file = "ms/modules/tables/gmm_deseq_results.xlsx", 
+           sheetName="52hvs56h", append=TRUE)
+# Add a third data set
+write.xlsx(sigtab.c, file = "ms/modules/tables/gmm_deseq_results.xlsx",
+           sheetName="240hvs248h", append=TRUE)
+write.xlsx(sigtab.b, file = "ms/modules/tables/gmm_deseq_results.xlsx",
+           sheetName="248hvs264h", append=TRUE)
+
+
+
+# Write the first data set in a new workbook
+write.table(sigtab.a, file = "ms/modules/tables/gmm_deseq_results_48hvs52h.txt",
+            sep="\t")
+# Add a second data set in a new worksheet
+write.table(sigtab.b, file = "ms/modules/tables/gmm_deseq_results_52hvs56h.txt", 
+            sep="\t")
+# Add a third data set
+write.table(sigtab.c, file = "ms/modules/tables/gmm_deseq_results_240hvs248h.txt",
+            sep="\t")
+write.table(sigtab.b, file = "ms/modules/tables/gmm_deseq_results_248hvs264h.txt",
+            sep="\t")
+
+```
+
+
+
+## Niche overlap  
+Next, to investigate whether the niche partitioning suggested by 16S rRNA gene based compositional analysis can be observed at transcriptional level in individual taxa, we calculated pairwise niche overlap for each of the timepoints. A lower niche overlap would suggest higher niche segregation and vice-versa. We used the gut metabolic module framework in which we used metabolic module expression as quantitative traits for calculation of niche overlap index. 
+We use an approach described previously by [Mouillot D., et al. 2005](https://link.springer.com/content/pdf/10.1007/s00442-005-0151-z.pdf).  
+The niche overlap index decribed by Mouillot D., et al. can be used on quantitative measures of traits. Especially, because it is non-parametric and assumes no normality in trait values. In our case, gut metabolic module abundances will be treated as traits and expression values as quantitative measures.  
+
+In the table below, you can see manual classification of traits.  
+```{r}
+gmm <- SyncomGMM
+gmm$trait_abund <- ceiling(gmm$value)
+gmm$sam_id <- paste0(gmm$Rep,"T",gmm$TimePoint)
+
+#import trophic level classification.
+
+trp_lev <- read.table("../data/curated_gmm_trophic_levels.txt", header = T, sep = "\t")
+DT::datatable(trp_lev)
+```
+
+### Quantify niche overlap   
+I will use only those GMMs that are either degradation or consumption.  
+In order to identify temporal variation in niche behavior, I will calculate pairwise overlap between taxa for each of the 12 time points for which we have RNASeq data.  
+```{r warning=FALSE, message=FALSE}
+# read in the nichoverlap function
+#https://github.com/umr-marbec/nicheoverlap/blob/master/nicheoverlap.R
+
+#source("codes/niche_overlap.R")
+
+#trp_lev_1 <- subset(trp_lev, trophic_class== "primary_consumer")$module_id
+#get module ids for those gmms that are either degradation or consuption
+trp_lev_1 <- subset(trp_lev, trophic_included== "yes")$module_id
+
+# keep those that are either degradation or consuption
+gmm_lev_1 <- subset(gmm, ModuleID %in% trp_lev_1) 
+# Now will keep only those whose abundance is more that 10 by convertin these to zeros to avoid error with bandwidth
+# arrange by timepoint  
+gmm_lev_2 <-gmm_lev_1 %>% arrange(TimePoint)
+#gmm_lev_1 <- subset(gmm_lev_1, TimePoint <=28)
+t <- NULL # to avoid any issues  
+niche_op <- c() # final df with all pairwise values for all time points
+all_nop <- list() # for every timepoint create a list
+for (t in unique(gmm_lev_2$TimePoint)){
+  gmm_1 <- gmm_lev_2 %>% 
+    filter(TimePoint == t) %>% 
+    group_by(ModuleID, Taxon) %>% 
+    summarise(trait_abund=mean(value))%>% # mean of three bioreactors
+    pivot_wider(id_cols = ModuleID,
+                names_from = Taxon,
+                values_from = "trait_abund") %>% 
+    mutate_if(is.numeric, ~replace(., is.na(.), 0)) 
+  
+  gmm.mat <- data.matrix(gmm_1)
+  #str(gmm_24h.mat)
+  #spps <- colnames(gmm.mat[,-1])
+  hold_mat <- matrix(NA, ncol(gmm.mat[,-1]), ncol(gmm.mat[,-1])) # empty matrix to hold pariwise values
+  rownames(hold_mat) <- colnames(gmm.mat[,-1])
+  colnames(hold_mat) <- colnames(gmm.mat[,-1])
+  #trait <- 
+  trait <- gmm.mat[,1] # get trait names
+  pair <- gmm.mat[,-1] # get trait abundances
+  pair = pair[ rowSums(pair) >=50, ] # remove traits with less than 50 counts
+  pair = pair[ ,colSums(pair) >=50] # remove taxa with less than 50 counts 
+  for (varname in colnames(pair)) {
+    
+    for (lev in colnames(pair)) {
+      
+      xvec <- pair[, varname]
+      yvec <- pair[, lev]
+      if (identical(xvec,yvec)){
+        hold_mat[varname, lev]<-1 # place holder
+      } else{
+        hold_mat[varname, lev] <- niche_overlap(cbind(trait,xvec,yvec), graph=F)
+      }
+      hold_mat_df <- reshape2::melt(hold_mat) #long df
+      hold_mat_df$t <- t #add current time point
+    }
+    
+  }
+  all_nop[[t]] <- hold_mat_df #populate list
+  niche_op <- dplyr::bind_rows(all_nop) # bind all tips
+}
+
+#unique(niche_overlap$t)
+colnames(niche_op) <- c("taxon_1", "taxon_2", "niche_overlap","time")
+niche_overlap_fil <- niche_op
+# filter out self overlaps
+niche_overlap_fil <-  niche_overlap_fil %>% 
+  mutate(niche_overlaps = ifelse(niche_overlap_fil$taxon_1==niche_overlap_fil$taxon_2, NA,niche_overlap_fil$niche_overlap)) %>% select(-niche_overlap)
+#head(niche_overlap_fil)
+
+niche_overlap_fil <- niche_overlap_fil %>% 
+  mutate(dist_val= ifelse(niche_overlaps >= 0.25 & niche_overlaps <= 0.75, "medium 0.25-0.75", ifelse(niche_overlaps < 0.25, "low < 0.25", ifelse(niche_overlaps >0.75, "high >0.75", ""))))
+
+head(niche_overlap_fil)
+```
+
+### Visualize temporal niche overlap   
+```{r fig.height = 10, fig.width = 16, fig.align = "center", fig.cap= "Temporal niche overlap"}
+
+niche_overlap_fil <- niche_overlap_fil %>% 
+  arrange(time)
+niche_overlap_fil$niche_seggregation <- (1- niche_overlap_fil$niche_overlaps)
+niche_overlap_fil$time_hr <- paste0(niche_overlap_fil$time, " ", "h")
+
+niche_overlap_fil <- niche_overlap_fil %>% 
+  arrange(time) %>%
+  mutate_at(vars(time_hr), funs(factor(., levels=unique(.))))
+
+temp_nop_plot <- ggplot(niche_overlap_fil, aes(x = niche_overlaps,y=taxon_2)) +
+  #geom_density_ridges(aes(fill = taxon_2), alpha=0.6) +  
+  geom_rect(xmin = 0.25, xmax = 0.75, ymin = -Inf, ymax = Inf, fill = 'grey90', alpha = 0.05)+
+  stat_density_ridges(quantile_lines = TRUE, quantiles = 2, aes(fill=taxon_2), alpha=0.6) + facet_wrap(~time_hr)+
+  scale_fill_manual("Species",values = syncom_colors("BacterialSpecies")) + 
+  theme_syncom()+ 
+  geom_vline(xintercept = 0.5, lty=2) + xlim(0,1)  + 
+  theme(axis.ticks.y = element_blank(), 
+        axis.text.y = element_blank(),
+        legend.text = element_text(size=10)) + xlab("Niche Overlap") + theme(legend.position="top") + ylab(" ") 
+
+ggsave("ms/modules/figures/02_nop_temporal.pdf", height = 8, width = 10)
+#ggsave("../scratch/niche_overlap_temporal.pdf", height = 10, width = 16)
+ggsave("ms/modules/figures/02_nop_temporal.png", height = 12, width = 14, dpi = 600)
+```
+
+Following the peaks for taxa at different timepoints, we see movement in overlaps. The dotted line represents a niche overlap values of 0.5 (min is 0 and max is 1). A noteable trend is higher overlap (most peaks >0.5) in fasting samples. While spikes in carbohydrates results is broader spread in niche overlap values. Carbs support co-existence, which is expected as niches are created by diet.    
+
+So over time how are pair-wise niche overlap distributed? Here, we plot density estimates for niche pair-wise niche overlap values to compared each strain with the rest of the strains in the community.  
+
+```{r fig.height = 10, fig.width = 16, fig.align = "center", fig.cap="Distribution of pair-wise niche overlap"}
+
+spps_pair <- ggdensity(niche_overlap_fil, "niche_overlaps",
+                       color = "taxon_1", 
+                       palette = syncom_colors("BacterialSpecies"),
+                       facet.by = "taxon_2", scales="free", size=0.5,
+                       rug = TRUE) +
+  #geom_density_ridges(aes(fill = taxon_2), alpha=0.6) +  
+  theme_bw()  + 
+  theme(#axis.ticks.y = element_blank(), 
+    strip.text = element_text(size=9,face="italic"), 
+    axis.text = element_text(size=10), 
+    #axis.text.y = element_blank(),
+    legend.text = element_text(size=10,face="italic")) + 
+  xlim(c(0,1)) + xlab("Niche Overlap") #+
+#  geom_vline(xintercept = 0.5, lty=3,  alpha=0.5, color="grey70")
+
+
+ggsave("ms/modules/figures/02a_density_niche_overlap_temporal_pairwise.pdf", height = 8, width = 11)
+#ggsave("../scratch/niche_overlap_pairwise.pdf", height = 10, width = 16)
+ggsave("ms/modules/figures/02a_density_niche_overlap_temporal_pairwise.png", height = 12, width = 14, dpi = 600)
+
+```
+
+The polysaccharide degraders, _B. xylanisolvens_ with _A. muciniphila_, _A. rectalis_ with _B. adolescentis_, _S. variabile_ with _F. prausnitzii_ showed comparatively higher niche overlap than non-degraders. However, _C. catus_ and _A. soehngenii_ showed low niche overlap. _C. catus_ more often than not showed low niche overlap with all the other 15 strains in the community. Interestingly, niche overlap patterns of two _Bacteroides_ species were similar to each other, while the two _Blautia_ species had variabile patterns of niche overlap. Moreover, the niche overlap values showed temporal variation, suggesting transcriptional response to changing environment. Most fasting timepoints showed larger spread in niche values of bacteria from _Firmicutes_ phylum. Thus, nutrient periodicity together with temporal niche partitioning are process driving the co-existence of all the 16 strains during the entire course of this experiment.   
+```{r}
+
+bacteroides <- subset(niche_overlap_fil, taxon_2 %in% c("Bacteroides_ovatus", "Bacteroides_xylanisolvens")) %>% group_by(time, taxon_2) %>% summarise(nop=mean(niche_overlaps, na.rm = T))
+
+#DT::datatable(bacteroides)
+
+blautia <- subset(niche_overlap_fil, taxon_2 %in% c("Blautia_obeum", "Blautia_hydrogenotrophica"))%>% group_by(time, taxon_2) %>% summarise(nop=mean(niche_overlaps, na.rm = T))
+
+DT::datatable(blautia)
+```
+
+## Trophic levels within the MDb-MM and realized niches of core bacteria  
+The presence of low niche overlap indicated the presence of trophic levels within the minimal microbiome. The metabolic flow and biomass distribution within the gut is largely driven by bacteria with specialized molecular machinery capable of degrading complex carbon sources. The action of polysaccharide degraders (primary consumers) results in niche construction that may be dependent on the source as well as their metabolic pathways. Consequently, leading to formation of a hierarchal organization within the community into trophic levels. Here, based on metatranscriptomic assignment of gut metabolic modules, we identify four trophic levels in agreement with previous computation simulations.    
+
+### Trophic niches      
+
+```{r}
+
+gmm <- SyncomGMM
+
+gmm$Taxon <- gsub("Flavonifractor_plautiia", "Flavonifractor_plautii", gmm$Taxon)
+gmm$sample_id <- paste0(gmm$Rep,"T",gmm$TimePoint)
+
+trp_lev <- read.table("../data/curated_gmm_trophic_levels.txt", header = T, sep = "\t")
+
+gmm_trp <- gmm
+names(gmm_trp)[names(gmm_trp) == "ModuleID"] <- "module_id"
+gmm_trp <- left_join(gmm_trp, trp_lev)
+
+library(ggtern)
+gmm_trp_guild <- gmm_trp %>% 
+  filter(trophic_guild!= "na") %>% 
+  group_by(Taxon, TimePoint, trophic_guild) %>% 
+  summarise (n = mean(value)) %>%
+  filter(n >=5) %>% 
+  mutate(freq = n / sum(n))
+
+
+gmm_trp_ldf <- gmm_trp_guild %>% 
+  pivot_wider(id_cols = c(Taxon,TimePoint), 
+              names_from = trophic_guild, 
+              values_from = freq)  %>% 
+  replace(is.na(.), 0)
+
+metld <- meta(SyncomFiltData) %>% 
+  select(Time_hr_num, Fasting, Pertubation, RNASeq)%>% 
+  filter(RNASeq=="YES") %>% 
+  distinct(Time_hr_num, Fasting, Pertubation) 
+
+colnames(metld) <- c("TimePoint", "Fasting", "Pertubation")
+
+gmm_trp_ldf.2 <- merge(gmm_trp_ldf, metld, by = "TimePoint")
+# Build and Render the Plot
+gmm_trp_ldf.2 = gmm_trp_ldf.2[with(gmm_trp_ldf.2, order(-trophic_guild_2)), ]
+
+gmm_trp_ldf.2$Taxon <- gsub("_", " ", gmm_trp_ldf.2$Taxon)
+
+triplot_trp_niche <- ggtern(data = gmm_trp_ldf.2, aes(x = trophic_guild_1, y = trophic_guild_2, z = trophic_guild_3)) +
+  #the layers
+  geom_mask()  +
+  geom_Tline(Tintercept=.5, colour='grey50') + 
+  geom_Lline(Lintercept=.5, colour='grey50') + 
+  geom_Rline(Rintercept=.5, colour='grey50') +
+  #geom_confidence_tern(alpha=0.7,size=1, aes(colour=Taxon)) + #MASK UNDER POINTS
+  geom_point(aes(color = Taxon, shape=Fasting), size=4, alpha=0.5) +
+  scale_color_manual(values=syncom_colors2("BacterialSpecies")) + #theme tweaks
+  theme_bw() + scale_shape_manual(values = c(15,16,17,18))+
+  theme_showarrows() +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    # panel.border = element_rect(size = 1),
+    # plot.margin = margin(0.3, 0.3, 0.3, 0.3, "cm"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.spacing = unit(0.5, "line"),
+    legend.text = element_text(face="italic"),
+    # axis.ticks = element_blank(),
+    axis.text = element_text(size = 8),
+    axis.title = element_text(size = 8),
+    strip.background = element_blank())   
+
+ggsave("ms/modules/figures/03_ternary_plot.pdf", height = 6, width = 12)
+ggsave("ms/modules/figures/03_ternary_plot.png", height =6, width = 12, dpi = 600)
+```
+
+
+### Trophic guild contribution   
+```{r fig.height = 10, fig.width = 16, fig.align = "center", fig.cap= "Trophic guild contribution"}
+
+
+gmm_trp_guild <- gmm_trp %>% 
+  filter(trophic_guild!= "na") %>% 
+  group_by(Taxon, TimePoint, trophic_guild) %>% 
+  summarise (n = mean(value)) %>%
+  filter(n >=5) %>% 
+  mutate(freq = n / sum(n))
+
+
+col_trp <- c(trophic_guild_1="#800000",
+             trophic_guild_2= "#d45500",
+             trophic_guild_3="#008080", 
+             trophic_guild_4= "#800080")
+
+ggbarplot(gmm_trp_guild, 
+          x = "TimePoint", 
+          y= "freq",
+          facet.by = "Taxon", 
+          fill = "trophic_guild",
+          palette = col_trp)  + 
+  theme(legend.position = "top")+
+  theme(#axis.ticks.y = element_blank(), 
+    strip.text = element_text(size=12,face="italic"), 
+    #axis.text = element_text(size=10),
+    legend.text = element_text(size=10))
+
+ggsave("ms/modules/figures/04_trophic_guild_contribution.pdf", height = 10, width = 14)
+ggsave("ms/modules/figures/04_trophic_guild_contribution.png", height = 10, width = 14, dpi = 600)
+```
+
+
+
+## Specific Metabolic Contribuitions  
+```{r}
+gmm <- SyncomGMM
+gmm$sample_id <- paste0(gmm$Rep,"T",gmm$TimePoint)
+gmm$Taxon <- gsub("_", " ", gmm$Taxon)
+
+# convert module counts to proportions
+gmm.rel <- gmm %>%
+  group_by(ModuleID, Module, sample_id, Taxon) %>%
+  filter(value >=10) %>% 
+  summarise (n = value) %>%
+  mutate(freq = n / sum(n))
+
+# create seperate cols for Bioreactors and Time point 
+gmm.rel <- gmm.rel %>% 
+  separate(col = sample_id, 
+           into = c("Bioreactor", "Time"), 
+           sep = "T")
+
+gmm.rel$Time <- as.numeric(gmm.rel$Time)
+gmm.rel$Taxon <- gsub("_", " ", gmm.rel$Taxon)
+```
+
+### Trophic level 1/Primary level  
+
+Metabolic modules for mucin, pectin, inulin, starch and arabinoxylan form the first trophic level. _A. muciniphila_ predominantly occupied a specialized niche for mucin consumption compared to _B. xylanisolvens_ which is not known for consuming mucin. Pectin degradation was identified in _F. prausnitzii_, _B. ovatus_ and _B. xylanisolvens_. Inulin degradation was relatively predominant in _B. adolescentis_, compared to _R. bromii_, _B. obeum_, _F. prausniztii_ and _S. variabile_. Starch degradation  was identified in _R. bromii_, _B. ovatus_ and _B. xylanisolvens_. _B. hydrogenotrophica_ was introduced at 152h into the minimal microbiome and showed active expression of starch degradation module at 176h, 240h, 248 and 264h. Xylan degradation activity was predominantly observed in S. variabile. The observation for xylan degradation was unexpected because in our previous study with 10-species diet based minimal microbiome, we did not observe high expression of gene involved in xylan degradation in _S. variable_. The observation of transcriptional activity at metabolic module level likely suggests a more concerted effort by multiple species to breakdown/utilize complex polysaccharides rather than just a single species.  
+
+```{r Polysaccharide-degradation, warning=FALSE,fig.height = 6, fig.width = 16}
+
+module.fiber <- subset(gmm.rel, Module == "pectin degradation I" | Module == "pectin degradation II"| Module == "fructan degradation (Curated)"| Module == "arabinoxylan degradation" | Module =="starch degradation" | Module == "mucin degradation")
+#module.fiber[module.fiber == 0]<- NA
+#str(module.fiber)
+
+
+p.fiber <- ggline(module.fiber, "Time", "freq",
+                  color = "Taxon", 
+                  facet.by = "Module",
+                  add="mean_sd",
+                  palette = syncom_colors2("BacterialSpecies"), 
+                  scales="free",
+                  ylab = "Relative proportions \n(metatranscriptomics)", legend = "bottom")
+p.fiber <- p.fiber + theme(#axis.ticks.y = element_blank(), 
+  panel.background = element_rect(fill = "white"),
+  panel.grid.major = element_blank(),
+  panel.spacing = unit(0.5, "line"),
+  panel.grid.minor = element_blank(),
+  strip.text = element_text(size=11), 
+  #axis.text.y = element_text(size=8),
+  #axis.text.x = element_text(size=9),
+  strip.background = element_blank(),
+  legend.title = element_text(size=8),
+  legend.position="bottom",
+  legend.text = element_text(face="italic"))
+
+
+p.fiber
+
+ggsave("ms/modules/figures/05_trophic_level_1.pdf", height = 6, width = 14)
+ggsave("ms/modules/figures/05_trophic_level_1.png", height = 6, width = 14, dpi=600)
+
+```
+
+KOs linked to GMMs  
+```{r}
+
+#arabinoxylan degradation
+arbxyl <- c("K01209",	"K15921",	"K01181",	"K01198",	"K15531",	"K18205")
+
+# fructan degradation (curated, FOS)
+frctn <- c("K01193",	"K03332", "K00847", "K10117" ,"K10118", "K10119", "K10112")
+
+# pectin degradation I
+pect_a <- c("K01051", "K01184","K01213",	"K18650")
+
+# pectin degradation II
+pect_b <- c("K01051","K18650","K01728","K19551",	"K01731" ,"K01730","K01815","K00874","K01625",	"K17463")
+
+# starch degradation
+strch <- c("K01176",	"K07405",	"K05343", "K01200",	"K01208","K00688",	"K16153",	"K00705",	"K01187",	"K15922",	"K01178",	"K01182")
+
+# mucin degradation 
+mucin <- c("K01186", "K05970", "K01132",	"K01135",	"K01137",	"K01205", "K01207",	"K12373",	"K14459", "K01205",	"K01207",	"K12373",	"K01227", "K13714", "K01206")
+```
+
+using the raw kegg counts now check for individual KO abundances 
+
+```{r}
+# since KO are part ofmultiple table the raw file stored on syncom has repitative values
+# we choose only unique
+
+kegg_ko <- SynComRNAKEGG %>% 
+  distinct(LocusTag,.keep_all = T) 
+
+# assign rownames
+rownames(kegg_ko) <- kegg_ko$LocusTag
+
+# convert the raw counts to counts per million to account for libray sizes 
+# the samples start from column 3 to 38
+kegg_ko_cpm <- as.data.frame(cpm(kegg_ko[,3:38], log = T))
+# add new column to join with original table
+kegg_ko_cpm$LocusTag <- rownames(kegg_ko_cpm)
+
+KO_gene <- select(kegg_ko, KOGeneName, KO,LocusTag, BacterialStrain)
+
+# join the two tables
+ko_cmp_cnts <- merge(KO_gene,kegg_ko_cpm, by="LocusTag")
+
+#readr::write_excel_csv2(ko_cmp_cnts, "results/tables/keeg_cpm_ko_pwy.csv")
+
+# now choose only those KO that are part of the trophic level 1 modules
+all <- c(arbxyl,frctn,pect_a,pect_b,strch,mucin)
+
+trp_1_kos <- subset(ko_cmp_cnts, KO %in% all) # the numbers will be different because not all ko as detected in transcriptomics
+
+# convert to long format
+trp_ldf <- melt(trp_1_kos)
+
+# fix this particular sample name for numeric conversion
+trp_ldf$variable <- gsub("74A5", "74.5", trp_ldf$variable) 
+
+# now we need to seperate cols for bioreactors and time points.
+trp_ldf <- trp_ldf %>% 
+  separate(col = variable, # holds the samples names
+           into = c("Bioreactor", "Time"), 
+           sep = "T")
+
+trp_ldf$Time <- as.numeric(trp_ldf$Time)
+
+# Now add a new column as a heirarchy for KO-Module 
+# arbxyl,frctn,pect_a,pect_b,strch
+trp_ldf <- trp_ldf %>% 
+  mutate(metab_module= ifelse(KO %in% arbxyl, "Arabinoxylan degradation",
+                              ifelse(KO %in% frctn, "Fructan degradation",
+                                     ifelse(KO %in% pect_a, "Pectin degradation I",
+                                            ifelse(KO %in% pect_b, "Pectin degradation II",
+                                                   ifelse(KO %in% strch, "Starch degradation",
+                                                          ifelse(KO %in% mucin, "Mucin degradation","Unkwn")))))))
+
+#head(trp_ldf)
+# create a new column to hold modified bacterial names
+
+trp_ldf$Taxon <- gsub("_", " ", trp_ldf$BacterialStrain)
+
+
+trp_ldf <- trp_ldf %>% 
+  mutate(Bioreactor= ifelse(Bioreactor == "F5", "Bioreactor A",
+                            ifelse(Bioreactor == "F6", "Bioreactor B",
+                                   ifelse(Bioreactor == "F8", "Bioreactor C","Unkwn"))))
+
+# Change name of lach spps 
+trp_ldf$Taxon <- gsub("Lachnospiraceae_bacterium", "Flavonifractor_plautii", trp_ldf$Taxon)
+
+# now we start plotting these data 
+```
+
+
+```{r}
+# reorder(OTU,var)
+trp_ldf$metab_module <- factor(trp_ldf$metab_module, levels= c("Fructan degradation","Starch degradation","Arabinoxylan degradation", "Mucin degradation", "Pectin degradation II","Pectin degradation I" ))
+
+tab <- gridExtra::tableGrob(trp_ldf %>% 
+                              distinct(KO, KOGeneName))
+plot(tab)
+```
+
+### Fructan KOs
+
+```{r fig.height=8, fig.width=16}
+fructan_plot <- trp_ldf %>% 
+  filter(metab_module == "Fructan degradation") %>% 
+  ggplot(aes(as.factor(Time),KO)) +
+  geom_tile(aes(fill=value), color="grey70") + 
+  facet_wrap(~Taxon) + ylab("KOs (Fructan degradation)") +
+  xlab("Time (h)") +
+  scale_fill_continuous("Counts per million (log)", 
+                        low = "#fa9fb5", high = "#49006a") + 
+  rotate_x_text() + 
+  theme_bw() + rotate_x_text() + 
+  theme(#axis.ticks.y = element_blank(), 
+    strip.background = element_rect(fill="white"),
+    strip.text = element_text(size=11, face='italic'), 
+    #axis.text.y = element_text(size=8),
+    #axis.text.x = element_text(size=9),
+    legend.title = element_text(size=8),
+    legend.position="top")
+
+fructan_plot
+ggsave("ms/modules/figures/05a_fructan_plot.pdf", height = 8, width = 12)
+
+```
+
+
+### Arabinoxylan KOs
+
+```{r fig.height=8, fig.width=16}
+arabxylan_plot <- trp_ldf %>% 
+  filter(metab_module == "Arabinoxylan degradation") %>% 
+  ggplot(aes(as.factor(Time),KO)) +
+  geom_tile(aes(fill=value), color="grey70") + 
+  facet_wrap(~Taxon) + ylab("KOs (Arabinoxylan degradation)") +
+  xlab("Time (h)") +
+  scale_fill_continuous("Counts per million (log)", 
+                        low = "#fa9fb5", high = "#49006a") + 
+  theme_bw() + rotate_x_text() + 
+  theme(#axis.ticks.y = element_blank(), 
+    strip.background = element_rect(fill="white"),
+    strip.text = element_text(size=11, face='italic'), 
+    axis.text.y = element_text(size=8),
+    axis.text.x = element_text(size=9),
+    legend.title = element_text(size=8),
+    legend.position="top")
+arabxylan_plot
+ggsave("ms/modules/figures/05a_arabinoxylan_plot.pdf", height = 6, width = 12)
+```
+
+### Pectin KOs
+
+```{r fig.height=8, fig.width=16}
+pectin_plot <- trp_ldf %>% 
+  filter(metab_module %in% c("Pectin degradation I","Pectin degradation II")) %>% 
+  ggplot(aes(as.factor(Time),KO)) +
+  geom_tile(aes(fill=value), color="grey70") + 
+  facet_wrap(~Taxon) + ylab("KOs (Pectin degradation I & II)") +
+  xlab("Time (h)") +
+  scale_fill_continuous("Counts per million (log)", 
+                        low = "#fa9fb5", high = "#49006a") + 
+  theme_bw() + rotate_x_text() + 
+  theme(#axis.ticks.y = element_blank(), 
+    strip.background = element_rect(fill="white"),
+    strip.text = element_text(size=11, face='italic'), 
+    axis.text.y = element_text(size=8),
+    axis.text.x = element_text(size=9),
+    legend.title = element_text(size=8),
+    legend.position="top")
+pectin_plot
+ggsave("ms/modules/figures/05a_pectin_plot.pdf", height = 6, width = 12)
+```
+
+### Starch KOs
+
+```{r fig.height=8, fig.width=16}
+starch_plot <- trp_ldf %>% 
+  filter(metab_module== "Starch degradation") %>% 
+  ggplot(aes(as.factor(Time),KO)) +
+  geom_tile(aes(fill=value), color="grey70") + 
+  facet_wrap(~Taxon) + ylab("KOs (Starch degradation)") +
+  xlab("Time (h)") +
+  scale_fill_continuous("Counts per million (log)", 
+                        low = "#fa9fb5", high = "#49006a") + 
+  theme_bw() + rotate_x_text() + 
+  theme(#axis.ticks.y = element_blank(), 
+    strip.background = element_rect(fill="white"),
+    strip.text = element_text(size=11, face='italic'), 
+    axis.text.y = element_text(size=8),
+    axis.text.x = element_text(size=9),
+    legend.title = element_text(size=8),
+    legend.position="top")
+starch_plot
+ggsave("ms/modules/figures/05a_starch_plot.pdf", height = 8, width = 12)
+```
+
+### Mucin KOs
+
+```{r fig.height=8, fig.width=16}
+mucin_plot <- trp_ldf %>% 
+  filter(metab_module== "Mucin degradation") %>% 
+  ggplot(aes(as.factor(Time),KO)) +
+  geom_tile(aes(fill=value), color="grey70") + 
+  facet_wrap(~Taxon) + 
+  ylab("KOs (Mucin degradation)") +
+  xlab("Time (h)") +
+  scale_fill_continuous("Counts per million (log)", 
+                        low = "#fa9fb5", high = "#49006a") + 
+  theme_bw() + rotate_x_text() + 
+  theme(#axis.ticks.y = element_blank(), 
+    strip.background = element_rect(fill="white"),
+    strip.text = element_text(size=11, face='italic'), 
+    axis.text.y = element_text(size=8),
+    axis.text.x = element_text(size=9),
+    legend.title = element_text(size=8),
+    legend.position="top")
+
+mucin_plot
+ggsave("ms/modules/figures/05a_mucin_plot.pdf", height = 6, width = 12)
+```
+
+## Trophic guild 2  
+
+```{r fig.height=8, fig.width=16}
+list.carbs <- c("xylose degradation", "galacturonate degradation I", "galacturonate degradation II", "lactose degradation", "maltose degradation", "arabinose degradation", "fructose degradation", "galactose degradation", "mannose degradation", "rhamnose degradation", "fucose degradation", "sucrose degradation I", "sucrose degradation II")
+
+module.carbs <- subset(gmm.rel, Module %in% list.carbs)
+#module.carbs[module.carbs ==0]<- NA
+
+p.carbs <- ggline(module.carbs, "Time", "freq", 
+                  color = "Taxon", 
+                  facet.by = "Module",
+                  add="mean_sd",
+                  palette = syncom_colors2("BacterialSpecies"), 
+                  scales="free",
+                  ylab = "Relative proportions \n(metatranscriptomics)", 
+                  legend = "bottom",  nrow = NULL, ncol = 2)
+p.carbs <- p.carbs + theme(legend.position="bottom",
+                           legend.text = element_text(face="italic"),
+                           strip.text = element_text(size = 12))
+p.carbs
+ggsave("ms/modules/figures/06_trophic_level_2.pdf", height = 12, width = 14)
+ggsave("ms/modules/figures/06_trophic_level_2.png", height = 12, width = 14, dpi=600)
+```
+
+## Trophic guild 3  
+
+```{r fig.height=8, fig.width=16}
+
+gmm.list.scfa <- c("propionate production IV (1,2-PD)","propionate production I",
+                   "propionate production III", 
+                   "homoacetogenesis", "acetate to acetyl-CoA",
+                   "acetyl-CoA to acetate", "acetate to acetyl-CoA II",
+                   "lactate production","lactate consumption II", 
+                   "acetyl-CoA to crotonyl-CoA",
+                   "lactate consumption III (lctABCDEF, Curated)",
+                   "pyruvate:formate lyase", "formate conversion",
+                   "Acetate synthesis IV", "Acetate synthesis II")
+
+module.vfa <- filter(gmm.rel, Module %in% gmm.list.scfa)
+
+p.vfa <- ggline(module.vfa, "Time", "freq", 
+                color = "Taxon", 
+                facet.by = "Module",
+                add="mean_sd",
+                palette = syncom_colors2("BacterialSpecies"), 
+                scales="free",
+                ylab = "Relative proportions \n(metatranscriptomics)", 
+                legend = "bottom",  nrow = NULL, ncol = 2)
+p.vfa <- p.vfa + theme(legend.position="bottom",
+                       legend.text = element_text(face="italic"),
+                       strip.text = element_text(size = 12))
+p.vfa
+ggsave("ms/modules/figures/07_trophic_level_3.pdf", height = 12, width = 14)
+ggsave("ms/modules/figures/07_trophic_level_3.png", height = 12, width = 14, dpi=600)
+```
+
+```{r}
+sessionInfo()
+```
+
