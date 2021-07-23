@@ -1,0 +1,192 @@
+---
+title: "Preparation of amplicon data"
+author: "Sudarshan A. Shetty"
+date: "`r date()`"
+output: 
+  html_document: 
+    toc: yes
+    toc_depth: 2
+    toc_float: true
+    code_folding: hide  
+editor_options: 
+  chunk_output_type: console
+---
+
+# Mucus Diet based minimal microbiome (MDb-MM-16)study 16S analysis
+
+This file contains codes/steps invovled in processing of `dada2` (v.1.10.1) analysis `01_dada2_FR_processsing.rmd`. The files created during this steps are stored in *amp_seq/output/rds/* subdirectory.     
+
+
+## Load libraries  
+
+```{r set-up, message=FALSE, warning=FALSE, eval=FALSE}
+
+#library("devtools"); 
+#devtools::install_github("timelyportfolio/sankeytree")
+
+library(DT) 
+library(microbiome)
+library(microbiomeutilities)
+library(scales)
+library(reshape2)
+library(tidyverse)
+
+source("codes/helper_functions.r")
+```
+
+
+## Data processing    
+
+### SyncomRawCounts  
+The `SyncomRawCounts` consist of output from dada2 processing that consists of all samples including the controls stored a `phyloseq` object and made available in `syncomR` package.  
+
+```{r eval=FALSE}
+
+#dir.create("output/data_rdata")
+
+# Hardrive G:\Post_doc\MM_MDb-MM\symcommR-master\03_amplicon\output\rds
+SyncomRawCounts <- readRDS("output/rds/ps_fr.rds")
+
+sample_data(SyncomRawCounts)$StudyIdentifier <- gsub("Bioreactor_A", "Bioreactor A",sample_data(SyncomRawCounts)$StudyIdentifier)
+sample_data(SyncomRawCounts)$StudyIdentifier <- gsub("Bioreactor_B", "Bioreactor B",sample_data(SyncomRawCounts)$StudyIdentifier)
+sample_data(SyncomRawCounts)$StudyIdentifier <- gsub("Bioreactor_C", "Bioreactor C",sample_data(SyncomRawCounts)$StudyIdentifier)
+
+
+save(SyncomRawCounts, file = "output/data_rdata/SyncomRawCounts.rda")
+```
+
+### SyncomCopyCorrectedCounts  
+The `SyncomCopyCorrectedCounts` consist of 16S rRNA gene copy number corrected counts including the controls stored a `phyloseq` object and made available in `syncomR` package.  
+
+The `SyncomFiltData` consist of 16S rRNA gene copy number corrected counts excluding technical replicate for sequencing (Time point 80) and the controls i.e. *FeedBottle*, *PCRcontrol*, *PositiveSeqControl*, *ReagentControlDNAkit* stored a `phyloseq` object and made available in `syncomR` package.  
+```{r}
+#SyncomCopyCorrectedCounts <- readRDS("CP_corrected_ps1.rds")
+
+controls <- c("FeedBottle", "PCRcontrol", "PositiveSeqControl", "ReagentControlDNAkit")
+SyncomRawCounts <- prune_samples( !(sample_data(SyncomRawCounts)$StudyIdentifier %in% controls), SyncomRawCounts)
+```
+
+```{r eval=FALSE}
+ps <- SyncomRawCounts
+print(ps)
+
+table(tax_table(ps)[, "Species"], exclude = NA)
+table(tax_table(ps)[, "Species"])
+colnames(tax_table(ps))
+```
+
+**Aggregate to speceis level**  
+
+```{r eval=FALSE}
+# Format the taxonomic table to make it compatible with aggregate_taxa function of microbiome R package.
+#head(abundances(ps))
+
+#source("codes/helper_functions.r")
+#head(abundances(ps))
+#ps <- format_ps(ps)
+ps <- tax_glom(ps, "Species")
+table(tax_table(ps)[, "Species"])
+taxa_names(ps) <- tax_table(ps)[,"Species"]
+#taxa_sums(ps)
+# manual check for sanity
+#abundances(ps1)
+
+```
+
+#### Get seq with copies
+```{r}
+# read in the function Doris Vandeputte obtained from github
+counts_tables <- meta(ps)
+#SampleID	CopyNumber
+
+counts_tables <- counts_tables[,c("FAIR_Labels","total_copies")]
+
+counts_tables <- subset(counts_tables, FAIR_Labels %in% sample_names(SyncomRawCounts))
+counts_tables$total_copies <- as.numeric(counts_tables$total_copies)
+rownames(counts_tables) <- counts_tables[,1]
+#counts_tables <- counts_tables[,-1]
+otu_qmp <- as.data.frame(t(abundances(ps))) # extract abundance table form copy number corrected pseq object
+
+otu_qmp_2 <- otu_qmp / rowSums(otu_qmp)
+otu_qmp_2$sample_id <- rownames(otu_qmp_2)
+counts_tables$sample_id <- counts_tables$FAIR_Labels
+
+otu_qmp_ldf <- reshape2::melt(otu_qmp_2)
+colnames(otu_qmp_ldf) <- c("sample_id", "taxa", "reabcounts")
+
+#The relative abundances obtained based on the sequencing reads were translated into total abundances by multiplying the relative abundance of each taxon by the total bacterial abundance (qPCR) in the sample. 
+otu_qmp_pcr <- otu_qmp_ldf %>% 
+  left_join(counts_tables, by="sample_id") %>% 
+  mutate(counts = ceiling(reabcounts*total_copies))
+otu_qmp_mat <- dcast(otu_qmp_pcr, sample_id ~ taxa, value.var="counts")
+rownames(otu_qmp_mat) <- otu_qmp_mat$sample_id
+otu_qmp_mat <- otu_qmp_mat[,-1]
+
+ps1.qmp <- ps
+otu_qmp_A <- otu_table(t(otu_qmp_mat), taxa_are_rows = T)
+otu_table(ps1.qmp) <- otu_qmp_A
+ps1.qmp
+
+```
+
+**Copy number correction**  
+
+The copy numbers were obtained from barnap genome sequences.  
+
+```{r eval=FALSE}
+copy_num <- read.table("database/mdbmm_copy_numbers.txt", 
+                     header = T, 
+                     row.names = 1, 
+                     stringsAsFactors = F, sep = "\t")
+
+DT::datatable(copy_num)
+```
+
+The copy numbers for individial strains was estimated using barrnap.  
+
+```{r eval=FALSE}
+# Extract strain counts from phyloseq object
+#counts <- as.data.frame(abundances(ps))
+#copy_num_file <- copy_num
+#column_with_ids = "Genus_species"
+
+ps1 <- copy_number_correction(ps= ps1.qmp, column_with_ids = "Genus_species", copy_num_tab=copy_num)
+ps1
+
+saveRDS(ps1, "output/rds/CP_corrected_ps1.rds") 
+
+SyncomCopyCorrectedCounts <- ps1 
+# Save as "SyncomCopyCorrectedCounts" for use with syncomR package 
+save(SyncomCopyCorrectedCounts, file = "output/data_rdata/SyncomCopyCorrectedCounts.rda")
+
+```
+
+
+### SyncomFiltData   
+
+
+```{r eval=FALSE}
+
+#ps1.sub <- readRDS("inst/extdata/ps1.sub.rds")
+remove_T80 <- c("F5T80.1", "F6T80.1", "F8T80.1")
+SyncomFiltData <- prune_samples( !(sample_names(SyncomCopyCorrectedCounts) %in% remove_T80), SyncomCopyCorrectedCounts)
+sample_data(SyncomFiltData)$Time_hr_num <- as.numeric(sample_data(SyncomFiltData)$Time_hr)
+
+print(SyncomFiltData)
+```
+
+
+```{r eval=FALSE}
+save(SyncomFiltData, file = "output/data_rdata/SyncomFiltData.rda")
+write_phyloseq(SyncomFiltData, "OTU","output/")
+```
+
+
+From here, I copied all the rda files into `syncomR` **output/data_rdata** folder. 
+
+Once the syncomR package is installed and loaded in the R environment `library(syncomR)` you can check data options using data()
+
+```{r}
+sessionInfo()
+```
+

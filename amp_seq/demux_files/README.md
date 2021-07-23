@@ -1,0 +1,1 @@
+Raw fastq file can be stored in this folder. Not on github due to size restrictions

@@ -1,0 +1,159 @@
+Original
+MF0003	pectin degradation I
+K01051
+K01184,K01213	K18650
+///
+MF0004	pectin degradation II
+K01051
+K18650
+K01728	K19551	K01731
+K01730
+K01815
+K00874
+K01625	K17463
+///
+
+Also check K10192
+K10192  	oligogalacturonide transport system substrate-binding protein
+K10193  	oligogalacturonide transport system permease protein
+K10194  	oligogalacturonide transport system permease protein
+K10195  	oligogalacturonide transport system ATP-binding protein
+#######################################################3
+Original
+MF0018	mannose degradation
+K01809	K15916	K16011
+
+New 
+MF0018	mannose degradation
+K01809	K15916	K16011
+K02793,K02794,K02795,K02796 # PTS system
+
+#####################################################################
+Original 
+MF0008	maltose degradation
+K00691
+K01838
+
+New
+Malto-oligosaccharide transporter
+K15772,K15771,K15770
+
+#####################################################################
+Original 
+MF0001	arabinoxylan degradation
+K01209	K15921	K01181	K01198	K15531	K18205
+
+New
+K15921
+
+Original
+MF0006	lactose degradation
+K12111	K01190	K12308
+
+NEW
+MF0006	lactose degradation
+K12111	K01190
+K02786,K02787,K02788
+
+
+#####################################################################
+Original
+MF0017	galactose degradation
+K01785
+K00849
+K00965
+K01784	K17716
+K01838
+
+NEW
+MF0017	galactose degradation
+K01785
+K00849
+K00965
+K01784	K17716
+K01838
+K12308
+K10542,K10541,K10540 # mglABC
+
+#####################################################################
+Original
+MF0019	rhamnose degradation
+K03534
+K01813	K01820
+K00848
+K01629
+K01803
+
+NEW
+MF0019	rhamnose degradation
+K03534
+K01813	K01820
+K00848
+K01629
+K01803
+K10559,K10560K10561,K10562 # transporters
+
+#####################################################################
+Original
+MF0021	xylose degradation
+K01805
+K00854
+
+NEW
+MF0021	xylose degradation
+K01805
+K00854
+K10548,K10547
+K10546 # pentose transporter specifically high in S. variabile.
+K10543 # xylose transporter
+
+#####################################################################
+Original
+MF0015	fructose degradation
+K00882
+
+New
+MF0015	fructose degradation
+K00882
+K02770,K02769,K02768
+
+#####################################################################
+Original
+MF0087	acetyl-CoA to crotonyl-CoA
+K00626
+K00023	K01782	K01825	K07516	K07547,K07548	K12405	K15016
+K01715	K01692	K01782	K01825	K13767	K15016
+///
+NEW
+MF0087	acetyl-CoA to crotonyl-CoA
+K00626
+K00023	K01782	K01825	K07516	K07547,K07548	K12405	K15016
+K01715	K01692	K01782	K01825	K13767	K15016	K00074
+
+#####################################################################
+NEWLY ADDED
+MF00075	acetate to acetyl-CoA II
+K00925
+K00625	K13788	K15024
+
+#####################################################################
+Original
+MF0078	lactaldehyde degradation
+K00048	
+///
+NEWLY ADDED
+MF0078	lactaldehyde degradation
+K00048	K07248	K19266
+///
+
+#####################################################################
+Original
+MF0090	ethanol production I
+K00656
+K00132	K04072	K04073	K18366
+K00001	K00121	K04072	K11440	K13953	K13954
+///
+NEWLY ADDED removed formate lyase
+MF0090	ethanol production I
+K00132	K04072	K04073	K18366
+K00001	K00121	K04072	K11440	K13953	K13954
