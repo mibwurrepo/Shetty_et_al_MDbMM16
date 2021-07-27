@@ -89,3 +89,4 @@ cut -f2 F8_152.merged.RefSeq_annotated | sort | uniq -c > counts/control_F8T152.
 ```
 
 The *merged.RefSeq_annotated_BLAST.txt file are the ones we analyzed in R.
+These are provided in the parent __rna_seq__ folder of this repository
