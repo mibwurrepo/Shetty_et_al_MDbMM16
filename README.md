@@ -28,7 +28,7 @@ install.packages("devtools")
 devtools::install_github("microsud/syncomR")
 
 ```
-The scripts that we used for processing raw reads are in amp_seq (dada2, raw reads to ASVs --> transferred to syncomR) and rna_seq (modified samsa2, raw reads to gene count tables --> transferred to syncomR). The main analysis codes and figures reported in the manuscript are located in `analysis`, `codes`, and `data` folders.  
+The scripts that we used for processing raw reads are in `amp_seq/` (dada2, raw reads to ASVs --> transferred to syncomR) and `rna_seq/` (modified samsa2, raw reads to gene count tables --> transferred to syncomR). The main analysis codes and figures reported in the manuscript are located in `analysis/`, `codes/`, and `data/` folders.  
 
 Correspondence for analysis:  
 Author: Sudarshan A. Shetty
