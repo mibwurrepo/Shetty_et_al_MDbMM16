@@ -462,7 +462,7 @@ write.xlsx(sigtab.b, file = "ms/modules/tables/gmm_deseq_results.xlsx",
 # Add a third data set
 write.xlsx(sigtab.c, file = "ms/modules/tables/gmm_deseq_results.xlsx",
            sheetName="240hvs248h", append=TRUE)
-write.xlsx(sigtab.b, file = "ms/modules/tables/gmm_deseq_results.xlsx",
+write.xlsx(sigtab.d, file = "ms/modules/tables/gmm_deseq_results.xlsx",
            sheetName="248hvs264h", append=TRUE)
 
 
@@ -476,7 +476,7 @@ write.table(sigtab.b, file = "ms/modules/tables/gmm_deseq_results_52hvs56h.txt",
 # Add a third data set
 write.table(sigtab.c, file = "ms/modules/tables/gmm_deseq_results_240hvs248h.txt",
             sep="\t")
-write.table(sigtab.b, file = "ms/modules/tables/gmm_deseq_results_248hvs264h.txt",
+write.table(sigtab.d, file = "ms/modules/tables/gmm_deseq_results_248hvs264h.txt",
             sep="\t")
 
 ```
