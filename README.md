@@ -1,4 +1,4 @@
-Functional analysis of a synthetic gut microbiome reveals niche segregation as a driving force for assembly, stability, co-existence and activity       
+Dynamic metabolic interactions and trophic roles of human gut microbes identified using a minimal microbiome exhibiting ecological properties          
 ----------------------------------------------------------------------------------------------------------------------
 
 Authors: Sudarshan A. Shetty<sup>1#⸸*</sup>, Ioannis Kostopoulos<sup>1#⁋</sup>, Sharon Geerlings<sup>1#</sup>, Hauke Smidt<sup>* 1</sup>, Willem M. de Vos<sup>1,2* </sup>, Clara Belzer<sup>*1</sup>  
@@ -17,7 +17,7 @@ Clara Belzer; clara.belzer[@]wur[dot]nl
 Hauke Smidt; hauke.smidt[@]wur[dot]nl   
 Willem M. de Vos; willem.devos[@]wur[dot]nl    
 
-This repository contains codes for analysis done in the research article by Sudarshan A. Shetty<sup>1#⸸*</sup>, Ioannis Kostopoulos<sup>1#⁋</sup>, Sharon Geerlings<sup>1#</sup>, Clara Belzer<sup>*1</sup>, Hauke Smidt<sup>*1</sup>, Willem M. de Vos<sup>1,2</sup>* (2021).Functional analysis of a synthetic gut microbiome reveals niche segregation as a driving force for assembly, stability, co-existence and activity. [in prep](XXX).   
+This repository contains codes for analysis done in the research article by Sudarshan A. Shetty<sup>1#⸸*</sup>, Ioannis Kostopoulos<sup>1#⁋</sup>, Sharon Geerlings<sup>1#</sup>, Clara Belzer<sup>*1</sup>, Hauke Smidt<sup>*1</sup>, Willem M. de Vos<sup>1,2</sup>* (2021). Dynamic metabolic interactions and trophic roles of human gut microbes identified using a minimal microbiome exhibiting ecological properties. [under review](XXX).   
 
 **We developed `syncomR` package as a research compendium for organizing and sharing files processed files and custom functions**   
 For re-running the analysis, first install `syncomR` package from [GitHub](https://github.com/microsud/syncomR)  
